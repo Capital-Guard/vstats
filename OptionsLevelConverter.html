@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QQQ &#8594; NQ Options Level Converter</title>
+<style>
+  :root{
+    --bg:#000; --panel:#0b0b0c; --panel2:#0f0f11; --line:#1c1c20;
+    --amber:#ff9e2c; --amberdim:#a5661a; --ink:#d7d7da; --dim:#6c6c72;
+    --grn:#39d98a; --red:#ff5b5b; --blue:#4aa8ff;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--ink);
+    font-family:'Consolas','SF Mono','Menlo','DejaVu Sans Mono',monospace;
+    font-size:13px; line-height:1.4; padding:10px;}
+  .topbar{display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--amberdim); padding:4px 8px 8px; margin-bottom:10px;}
+  .brand{color:var(--amber); font-weight:bold; letter-spacing:2px; font-size:15px;}
+  .brand .sub{color:var(--dim); font-weight:normal; letter-spacing:1px; font-size:11px; margin-left:10px;}
+  .clock{color:var(--amber); font-size:12px; letter-spacing:1px;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .panel{border:1px solid var(--line); background:var(--panel); margin-bottom:10px;}
+  .phead{background:var(--panel2); color:var(--amber); font-size:11px; letter-spacing:1.5px;
+    padding:5px 8px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between;}
+  .phead .r{color:var(--dim);}
+  .pbody{padding:10px;}
+  label{color:var(--dim); font-size:10px; letter-spacing:1px;}
+  input,textarea,select{background:#050506; border:1px solid var(--line); color:var(--ink);
+    font-family:inherit; font-size:13px; padding:6px 8px; outline:none;}
+  input:focus,textarea:focus{border-color:var(--amber);}
+  input[type=number]{width:110px;}
+  .row{display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap;}
+  .calc{display:flex; gap:20px; flex-wrap:wrap; margin-top:8px;}
+  .calc .k{color:var(--dim); font-size:10px; letter-spacing:1px;}
+  .calc .v{color:var(--amber); font-size:18px; font-weight:bold;}
+  button{background:#111; border:1px solid var(--amberdim); color:var(--amber);
+    font-family:inherit; font-size:12px; letter-spacing:1px; padding:7px 16px; cursor:pointer;}
+  button:hover{background:var(--amber); color:#000;}
+  button.ghost{border-color:var(--line); color:var(--dim);}
+  button.ghost:hover{background:var(--line); color:var(--ink);}
+  textarea{width:100%; height:120px; resize:vertical; line-height:1.5;}
+  .hint{color:var(--dim); font-size:10px; letter-spacing:0.5px; margin:6px 0;}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th{color:var(--amber); text-align:right; font-size:10px; letter-spacing:1px; font-weight:normal;
+    padding:5px 8px; border-bottom:1px solid var(--line); white-space:nowrap;}
+  th.l,td.l{text-align:left;}
+  td{padding:5px 8px; text-align:right; border-bottom:1px solid #101013; white-space:nowrap;}
+  tr:hover td{background:#101014;}
+  .call{color:var(--grn);} .put{color:var(--red);} .amb{color:var(--amber);} .dim{color:var(--dim);}
+  .tag{padding:1px 7px; font-size:10px; letter-spacing:1px; border:1px solid;}
+  .tag.c{color:var(--grn); border-color:#1c5a3c;} .tag.p{color:var(--red); border-color:#5a1c1c;}
+  .wall{background:#141410;} .barc{display:inline-block; height:9px; background:var(--amber); vertical-align:middle;}
+  .zone{color:var(--blue); font-size:10px; letter-spacing:1px;}
+  .foot{color:var(--dim); font-size:10px; letter-spacing:1px; text-align:center; margin-top:6px;
+    border-top:1px solid var(--line); padding-top:8px;}
+  .spot{color:var(--ink); font-size:11px;}
+  .legend{color:var(--dim); font-size:10px; letter-spacing:1px; margin-top:8px;}
+  ::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:var(--line);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">&#9700; QQQ &#8594; NQ OPTIONS LEVELS <span class="sub">OPEN-INTEREST WALLS &middot; FUTURES-CONVERTED</span></div>
+  <div class="clock" id="clock">--:--:-- UTC</div>
+</div>
+
+<!-- LIVE INPUTS -->
+<div class="panel">
+  <div class="phead"><span>&#9702; LIVE MARKET INPUTS</span><span class="r">RECOMPUTE EACH SESSION</span></div>
+  <div class="pbody">
+    <div class="row">
+      <div><label>NDX (cash index)</label><br><input type="number" id="ndx" value="29400" step="0.01"></div>
+      <div><label>QQQ (ETF)</label><br><input type="number" id="qqq" value="715" step="0.01"></div>
+      <div><label>NQ (future)</label><br><input type="number" id="nq" value="29450" step="0.25"></div>
+      <div style="align-self:flex-end;"><button onclick="recalc()">&#8635; COMPUTE</button></div>
+    </div>
+    <div class="calc">
+      <div><div class="k">NDX / QQQ RATIO</div><div class="v" id="ratio">41.10</div></div>
+      <div><div class="k">NQ &minus; NDX BASIS</div><div class="v" id="basis">+50.0</div></div>
+      <div><div class="k">FORMULA</div><div class="v" style="font-size:13px;color:var(--dim)">NQ = strike &times; ratio + basis</div></div>
+    </div>
+    <div class="hint">Read NDX, QQQ and NQ live off your platform right now, type them in, hit COMPUTE. Ratio &amp; basis drift daily &mdash; refresh them each morning before converting.</div>
+  </div>
+</div>
+
+<!-- PASTE STRIKES -->
+<div class="panel">
+  <div class="phead"><span>&#9702; STRIKE INPUT</span><span class="r">PASTE OR TYPE &middot; ONE PER LINE</span></div>
+  <div class="pbody">
+    <div class="hint">Format per line:&nbsp; <span class="amb">TYPE&nbsp; STRIKE&nbsp; OI</span> &nbsp; (TYPE = C or P). Example:&nbsp;
+      <span class="call">C 730 23510</span> &nbsp; / &nbsp; <span class="put">P 700 71838</span>.
+      &nbsp;Commas in OI are fine (23,510). Spaces or tabs both work.</div>
+    <textarea id="raw" spellcheck="false">C 730 23510
+C 725 18400
+C 740 9120
+P 700 71838
+P 710 22300
+P 690 15600</textarea>
+    <div class="row" style="margin-top:8px;">
+      <button onclick="convert()">&#9650; CONVERT TO NQ LEVELS</button>
+      <button class="ghost" onclick="loadEx()">SAMPLE</button>
+      <button class="ghost" onclick="document.getElementById('raw').value='';">CLEAR</button>
+      <button class="ghost" onclick="copyLevels()">COPY NQ LEVELS</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div class="panel">
+  <div class="phead"><span>&#9702; NQ LEVELS</span><span class="r" id="spotnote"></span></div>
+  <div class="pbody" style="overflow-x:auto;">
+    <table>
+      <thead><tr>
+        <th class="l">TYPE</th><th>QQQ STRIKE</th><th>OI</th><th>NDX EQUIV</th>
+        <th>NQ LEVEL</th><th class="l">vs SPOT</th><th class="l">SIZE</th><th class="l">NOTE</th>
+      </tr></thead>
+      <tbody id="out"></tbody>
+    </table>
+    <div class="legend" id="legend"></div>
+  </div>
+</div>
+
+<div class="foot">RAW OPEN-INTEREST METHOD &middot; BIGGEST CALL OI ABOVE = RESISTANCE &middot; BIGGEST PUT OI BELOW = SUPPORT &middot; RECOMPUTE RATIO/BASIS DAILY</div>
+
+<script>
+function tick(){const d=new Date();document.getElementById('clock').textContent=d.toUTCString().split(' ')[4]+' UTC';}
+setInterval(tick,1000);tick();
+
+let ratio=41.10, basis=50.0, nqSpot=29450;
+function recalc(){
+  const ndx=+document.getElementById('ndx').value||0;
+  const qqq=+document.getElementById('qqq').value||1;
+  const nq =+document.getElementById('nq').value||0;
+  ratio= qqq? ndx/qqq : 0;
+  basis= nq-ndx;
+  nqSpot=nq;
+  document.getElementById('ratio').textContent=ratio.toFixed(2);
+  document.getElementById('basis').textContent=(basis>=0?'+':'')+basis.toFixed(1);
+  convert();
+}
+function toNQ(strike){ return strike*ratio + basis; }
+
+function parseRaw(){
+  const lines=document.getElementById('raw').value.split(/\r?\n/);
+  const out=[];
+  lines.forEach(l=>{
+    const s=l.trim(); if(!s) return;
+    // split on whitespace; strip commas from numbers
+    const parts=s.replace(/,/g,'').split(/[\s\t]+/);
+    if(parts.length<3) return;
+    let type=parts[0].toUpperCase();
+    type = /^C/.test(type)?'C' : (/^P/.test(type)?'P':'?');
+    const strike=parseFloat(parts[1]);
+    const oi=parseFloat(parts[2]);
+    if(isNaN(strike)||isNaN(oi)||type==='?') return;
+    out.push({type,strike,oi});
+  });
+  return out;
+}
+
+let lastLevels=[];
+function convert(){
+  const rows=parseRaw();
+  const tbody=document.getElementById('out');
+  if(!rows.length){ tbody.innerHTML='<tr><td colspan="8" class="dim" style="text-align:center;padding:20px;">NO VALID LINES &mdash; USE FORMAT: C 730 23510</td></tr>'; document.getElementById('legend').textContent=''; return; }
+
+  const maxOI=Math.max.apply(null,rows.map(r=>r.oi));
+  // identify walls: biggest call OI ABOVE spot, biggest put OI BELOW spot
+  const calls=rows.filter(r=>r.type==='C');
+  const puts =rows.filter(r=>r.type==='P');
+  const callWall = calls.filter(r=>toNQ(r.strike)>=nqSpot).sort((a,b)=>b.oi-a.oi)[0]
+                || calls.slice().sort((a,b)=>b.oi-a.oi)[0];
+  const putWall  = puts.filter(r=>toNQ(r.strike)<=nqSpot).sort((a,b)=>b.oi-a.oi)[0]
+                || puts.slice().sort((a,b)=>b.oi-a.oi)[0];
+
+  // sort display by NQ level descending (top of chart first)
+  const disp=rows.map(r=>({...r,nq:toNQ(r.strike),ndx:r.strike*ratio})).sort((a,b)=>b.nq-a.nq);
+
+  lastLevels=disp;
+  tbody.innerHTML=disp.map(r=>{
+    const isCallWall=callWall && r.type==='C' && r.strike===callWall.strike;
+    const isPutWall =putWall  && r.type==='P' && r.strike===putWall.strike;
+    const wallCls=(isCallWall||isPutWall)?'wall':'';
+    const vsSpot=r.nq-nqSpot;
+    const barW=Math.max(2,Math.round(r.oi/maxOI*90));
+    let note='';
+    if(isCallWall) note='<span class="call">&#9668; CALL WALL (resistance)</span>';
+    else if(isPutWall) note='<span class="put">&#9668; PUT WALL (support)</span>';
+    return `<tr class="${wallCls}">
+      <td class="l"><span class="tag ${r.type==='C'?'c':'p'}">${r.type==='C'?'CALL':'PUT'}</span></td>
+      <td>${r.strike.toFixed(0)}</td>
+      <td class="dim">${r.oi.toLocaleString()}</td>
+      <td class="dim">${r.ndx.toFixed(0)}</td>
+      <td class="amb" style="font-weight:bold">${r.nq.toFixed(0)}</td>
+      <td class="l ${vsSpot>=0?'call':'put'}">${vsSpot>=0?'+':''}${vsSpot.toFixed(0)}</td>
+      <td class="l"><span class="barc" style="width:${barW}px"></span></td>
+      <td class="l">${note}</td>
+    </tr>`;
+  }).join('');
+
+  // zone detection: strikes whose NQ levels are within 40 pts of each other
+  const zones=[];
+  const sorted=disp.slice().sort((a,b)=>a.nq-b.nq);
+  let cluster=[sorted[0]];
+  for(let i=1;i<sorted.length;i++){
+    if(sorted[i].nq-cluster[cluster.length-1].nq<=40) cluster.push(sorted[i]);
+    else { if(cluster.length>=2) zones.push(cluster); cluster=[sorted[i]]; }
+  }
+  if(cluster.length>=2) zones.push(cluster);
+  const zTxt = zones.length
+    ? 'CLUSTERS (zones, stronger than single lines): '+zones.map(z=>{
+        const lo=Math.min.apply(null,z.map(x=>x.nq)), hi=Math.max.apply(null,z.map(x=>x.nq));
+        return 'NQ '+lo.toFixed(0)+'-'+hi.toFixed(0)+' ('+z.length+' strikes)';
+      }).join('  &middot;  ')
+    : 'No tight clusters &mdash; each level is isolated (clean single lines).';
+  const wallTxt = (callWall?('CALL WALL &#8594; NQ '+toNQ(callWall.strike).toFixed(0)):'') +
+                  (callWall&&putWall?'   |   ':'') +
+                  (putWall?('PUT WALL &#8594; NQ '+toNQ(putWall.strike).toFixed(0)):'');
+  document.getElementById('legend').innerHTML='<span class="zone">'+zTxt+'</span><br>'+wallTxt;
+  document.getElementById('spotnote').textContent='NQ SPOT '+nqSpot.toFixed(0)+'  &middot;  RATIO '+ratio.toFixed(2)+'  &middot;  BASIS '+(basis>=0?'+':'')+basis.toFixed(1);
+}
+
+function copyLevels(){
+  if(!lastLevels.length){ convert(); }
+  const txt=lastLevels.map(r=>(r.type==='C'?'Call ':'Put ')+r.strike.toFixed(0)+' -> NQ '+r.nq.toFixed(0)+'  (OI '+r.oi.toLocaleString()+')').join('\n');
+  navigator.clipboard.writeText(txt).then(()=>{
+    const b=event.target; const o=b.textContent; b.textContent='COPIED'; setTimeout(()=>b.textContent=o,1200);
+  }).catch(()=>alert(txt));
+}
+
+function loadEx(){
+  document.getElementById('raw').value='C 730 23510\nC 725 18400\nC 740 9120\nP 700 71838\nP 710 22300\nP 690 15600';
+  convert();
+}
+
+recalc();
+</script>
+</body>
+</html>
