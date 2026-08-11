@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>9:30 Open Displacement Setup — Logger</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --card:#ffffff; --ink:#1c2230; --dim:#6b7280; --line:#e2e5ea;
+    --accent:#2563eb; --grn:#16a34a; --red:#dc2626; --amber:#d97706; --soft:#f0f4ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:14px;line-height:1.5;padding:20px;}
+  .wrap{max-width:1150px;margin:0 auto;}
+  h1{font-size:22px;font-weight:700;letter-spacing:-0.3px;}
+  h1 .sub{font-size:13px;font-weight:400;color:var(--dim);margin-left:10px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    box-shadow:0 1px 3px rgba(16,24,40,.04);padding:18px 20px;margin-bottom:16px;}
+  .card h2{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+    color:var(--accent);margin-bottom:14px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+  label{display:block;font-size:11px;font-weight:600;letter-spacing:.4px;color:var(--dim);
+    text-transform:uppercase;margin-bottom:4px;}
+  input,select,textarea{width:100%;background:#fff;border:1px solid var(--line);border-radius:8px;
+    color:var(--ink);font-family:inherit;font-size:14px;padding:8px 10px;outline:none;}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12);}
+  textarea{resize:vertical;min-height:44px;}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;
+    font-size:14px;font-weight:600;padding:10px 22px;cursor:pointer;}
+  .btn:hover{background:#1e50c8;}
+  .btn.ghost{background:#fff;color:var(--dim);border:1px solid var(--line);}
+  .btn.ghost:hover{background:#f7f8fa;color:var(--ink);}
+  .row-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .hint{font-size:12px;color:var(--dim);margin-top:4px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--dim);
+    font-weight:600;padding:8px 10px;border-bottom:2px solid var(--line);white-space:nowrap;}
+  td{padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  tr:hover td{background:var(--soft);}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+  .pill.buy{background:#e7f6ec;color:var(--grn);} .pill.sell{background:#fdeaea;color:var(--red);}
+  .pill.yes{background:#e7f6ec;color:var(--grn);} .pill.no{background:#f1f2f4;color:var(--dim);}
+  .r-pos{color:var(--grn);font-weight:700;} .r-neg{color:var(--red);font-weight:700;}
+  .del{color:var(--dim);cursor:pointer;font-weight:700;} .del:hover{color:var(--red);}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;}
+  .stat{background:var(--soft);border-radius:10px;padding:12px 14px;}
+  .stat .k{font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--dim);}
+  .stat .v{font-size:22px;font-weight:700;margin-top:2px;}
+  .empty{text-align:center;color:var(--dim);padding:26px;}
+  .foot{text-align:center;color:var(--dim);font-size:12px;margin-top:8px;}
+  .legend{font-size:12px;color:var(--dim);line-height:1.7;}
+  .legend b{color:var(--ink);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>9:30 Open Displacement Setup <span class="sub">displacement → pullback → options level → H4 filter → continuation</span></h1>
+  <p class="hint" style="margin:6px 0 16px;">Log every day the setup <b>could</b> trigger — including the ones where the pullback failed or never came. That's the only way the hit rate is honest.</p>
+
+  <!-- ENTRY -->
+  <div class="card">
+    <h2>Log Today's Open</h2>
+    <div class="grid">
+      <div><label>Date</label><input id="date" placeholder="8/11"></div>
+      <div><label>9:30 Open Direction</label>
+        <select id="dir"><option value="">—</option><option>BULL</option><option>BEAR</option><option>FLAT / unclear</option></select></div>
+      <div><label>Displacement (pts)</label><input id="disp" type="number" step="1" placeholder="120"></div>
+      <div><label>Pullback to 9:30 open?</label>
+        <select id="pb"><option value="">—</option><option>YES – full</option><option>PARTIAL (~50%)</option><option>NO – ran away</option><option>THROUGH – reversed</option></select></div>
+      <div><label>Options level at pullback?</label>
+        <select id="lvl"><option value="">—</option><option>YES – on a level</option><option>NEAR (&lt;30pt)</option><option>NO level</option></select></div>
+      <div><label>H4 HalfTrend</label>
+        <select id="ht"><option value="">—</option><option>ABOVE (bull)</option><option>BELOW (bear)</option></select></div>
+      <div><label>CETX direction</label>
+        <select id="cetx"><option value="">—</option><option>UP</option><option>DOWN</option><option>MIXED</option></select></div>
+      <div><label>Aligned? (H4 + dir + CETX)</label>
+        <select id="align"><option value="">—</option><option>ALL AGREE</option><option>PARTIAL</option><option>CONFLICT</option></select></div>
+      <div><label>Took the trade?</label>
+        <select id="took"><option value="">—</option><option>YES</option><option>NO – no setup</option><option>NO – skipped</option></select></div>
+      <div><label>Max Reward (R)</label><input id="maxr" type="number" step="0.1" placeholder="2.5 / -1"></div>
+      <div style="grid-column:1/-1;"><label>Note (what happened / why skipped)</label><textarea id="note" placeholder="e.g. displaced 130 down, pulled to open + tagged 725 put level, H4 below, ran 3R"></textarea></div>
+    </div>
+    <div class="row-btns">
+      <button class="btn" onclick="addRow()">▲ Log Day</button>
+      <button class="btn ghost" onclick="loadSample()">Sample</button>
+      <button class="btn ghost" onclick="exportCSV()">Export CSV</button>
+      <button class="btn ghost" onclick="clearAll()">Clear All</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="card">
+    <h2>Read-Out</h2>
+    <div class="stats" id="stats"></div>
+    <p class="hint" id="statnote" style="margin-top:12px;"></p>
+  </div>
+
+  <!-- LOG -->
+  <div class="card">
+    <h2>The Log</h2>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead><tr>
+          <th>Date</th><th>Dir</th><th>Disp</th><th>Pullback</th><th>Opt Lvl</th>
+          <th>H4</th><th>CETX</th><th>Aligned</th><th>Took</th><th>Max R</th><th>Note</th><th></th>
+        </tr></thead>
+        <tbody id="log"></tbody>
+      </table>
+    </div>
+    <div id="empty" class="empty">No days logged yet — hit “Sample” to see how it looks, or log today's open above.</div>
+  </div>
+
+  <!-- WHAT TO WATCH -->
+  <div class="card">
+    <h2>What The Data Should Tell You (after ~20-30 days)</h2>
+    <div class="legend">
+      • <b>Does the pullback actually come?</b> Count NO / ran-away days — if it's a big share, "always pulls back" is wrong and you need a no-trade rule.<br>
+      • <b>Displacement range</b> — is it really 100-150, or does it scale with the day's volatility? The average + spread tells you.<br>
+      • <b>Does the options level add edge?</b> Compare Max-R when a level was there vs not. If "on a level" days aren't better, the level isn't the edge — the open is.<br>
+      • <b>Does alignment matter?</b> Compare ALL-AGREE vs CONFLICT days. If aligned days carry the winners, that's your filter.<br>
+      • <b>Expectancy in R</b> — the bottom line. Positive across enough days = a real setup, not a remembered one.
+    </div>
+  </div>
+
+  <div class="foot">Bright by request 🤍 · Data stored locally on this device</div>
+</div>
+
+<script>
+const KEY="open_setup_log_v1"; let mem=[];
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v));}catch(e){mem=v;}}
+function load(){try{const s=localStorage.getItem(KEY);return s?JSON.parse(s):mem;}catch(e){return mem;}}
+let rows=load();
+
+const F=['date','dir','disp','pb','lvl','ht','cetx','align','took','maxr','note'];
+function addRow(){
+  const g=id=>document.getElementById(id).value;
+  const r={}; F.forEach(k=>r[k]=g(k));
+  if(!r.date && r.maxr==='' ){ document.getElementById('date').focus(); return; }
+  r.maxr = r.maxr===''? null : parseFloat(r.maxr);
+  r.disp = r.disp===''? null : parseFloat(r.disp);
+  rows.push(r); save(rows);
+  ['disp','maxr','note'].forEach(id=>document.getElementById(id).value='');
+  render();
+}
+function del(i){rows.splice(i,1);save(rows);render();}
+function clearAll(){if(rows.length&&!confirm('Clear all logged days?'))return;rows=[];save(rows);render();}
+
+function pill(v,map){ if(!v)return '<span class="pill no">—</span>';
+  const cls=map(v); return '<span class="pill '+cls+'">'+v+'</span>'; }
+
+function render(){
+  const tb=document.getElementById('log'), em=document.getElementById('empty');
+  if(!rows.length){tb.innerHTML='';em.style.display='block';stats();return;}
+  em.style.display='none';
+  tb.innerHTML=rows.map((r,i)=>{
+    const dirC = r.dir==='BULL'?'buy':(r.dir==='BEAR'?'sell':'no');
+    const rC = r.maxr==null?'':(r.maxr>=0?'r-pos':'r-neg');
+    return '<tr>'+
+      '<td>'+(r.date||'')+'</td>'+
+      '<td>'+pill(r.dir,v=>v==='BULL'?'buy':v==='BEAR'?'sell':'no')+'</td>'+
+      '<td>'+(r.disp==null?'—':r.disp)+'</td>'+
+      '<td>'+(r.pb||'—')+'</td>'+
+      '<td>'+(r.lvl||'—')+'</td>'+
+      '<td>'+(r.ht||'—')+'</td>'+
+      '<td>'+(r.cetx||'—')+'</td>'+
+      '<td>'+(r.align||'—')+'</td>'+
+      '<td>'+(r.took||'—')+'</td>'+
+      '<td class="'+rC+'">'+(r.maxr==null?'—':(r.maxr>=0?'+':'')+r.maxr.toFixed(1)+'R')+'</td>'+
+      '<td style="white-space:normal;max-width:260px;color:var(--dim)">'+(r.note||'')+'</td>'+
+      '<td><span class="del" onclick="del('+i+')">✕</span></td></tr>';
+  }).join('');
+  stats();
+}
+
+function stats(){
+  const n=rows.length;
+  const withR=rows.filter(r=>r.maxr!=null);
+  const disp=rows.filter(r=>r.disp!=null).map(r=>r.disp);
+  const avgDisp = disp.length? (disp.reduce((a,b)=>a+b,0)/disp.length) : null;
+  const pulled = rows.filter(r=>r.pb && (r.pb.startsWith('YES')||r.pb.startsWith('PARTIAL'))).length;
+  const ranAway = rows.filter(r=>r.pb && (r.pb.startsWith('NO')||r.pb.startsWith('THROUGH'))).length;
+  const pbRate = n? (pulled/n*100) : 0;
+  // expectancy at a 2R target from Max Reward (hit 2R => +2, else -1) — quick read
+  const exp2 = withR.length? withR.reduce((a,r)=>a+(r.maxr>=2?2:-1),0)/withR.length : null;
+  const onLvl = withR.filter(r=>r.lvl && r.lvl.startsWith('YES'));
+  const offLvl = withR.filter(r=>r.lvl && r.lvl.startsWith('NO'));
+  const avg=a=>a.length?a.reduce((x,r)=>x+r.maxr,0)/a.length:null;
+  const cell=(k,v,cls='')=>'<div class="stat"><div class="k">'+k+'</div><div class="v '+cls+'">'+v+'</div></div>';
+  document.getElementById('stats').innerHTML =
+    cell('Days logged', n)+
+    cell('Pullback rate', n?pbRate.toFixed(0)+'%':'—')+
+    cell('Avg displacement', avgDisp==null?'—':Math.round(avgDisp)+' pts')+
+    cell('Avg Max-R', withR.length?((avg(withR)>=0?'+':'')+avg(withR).toFixed(2)+'R'):'—', withR.length&&avg(withR)>=0?'r-pos':'r-neg')+
+    cell('Exp @2R target', exp2==null?'—':((exp2>=0?'+':'')+exp2.toFixed(2)+'R'), exp2!=null&&exp2>=0?'r-pos':'r-neg')+
+    cell('On-level Max-R', onLvl.length?((avg(onLvl)>=0?'+':'')+avg(onLvl).toFixed(2)+'R'):'—')+
+    cell('Off-level Max-R', offLvl.length?((avg(offLvl)>=0?'+':'')+avg(offLvl).toFixed(2)+'R'):'—');
+  const note = n<15
+    ? 'Sample still small ('+n+' days) — numbers will swing a lot until ~20-30. Keep logging every qualifying open, wins AND misses.'
+    : (onLvl.length&&offLvl.length
+        ? 'On-level vs off-level Max-R is the key comparison: if on-level isn\u2019t clearly higher, the options level isn\u2019t adding the edge.'
+        : 'Log some days both with and without an options level at the pullback, to test whether the level actually helps.');
+  document.getElementById('statnote').textContent=note;
+}
+
+function exportCSV(){
+  const head=['date','direction','displacement','pullback','opt_level','h4','cetx','aligned','took','max_r','note'];
+  const esc=s=>{s=(s==null?'':String(s));return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+  const body=rows.map(r=>[r.date,r.dir,r.disp,r.pb,r.lvl,r.ht,r.cetx,r.align,r.took,r.maxr,r.note].map(esc).join(','));
+  const blob=new Blob([[head.join(',')].concat(body).join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='open-setup-log.csv';a.click();
+}
+
+function loadSample(){
+  rows=[
+    {date:'8/6',dir:'BEAR',disp:150,pb:'YES – full',lvl:'YES – on a level',ht:'BELOW (bear)',cetx:'DOWN',align:'ALL AGREE',took:'YES',maxr:3.2,note:'displaced down, pulled to open + put level, ran clean'},
+    {date:'8/7',dir:'BULL',disp:90,pb:'PARTIAL (~50%)',lvl:'NEAR (<30pt)',ht:'ABOVE (bull)',cetx:'UP',align:'ALL AGREE',took:'YES',maxr:2.1,note:'shallower pullback, still worked'},
+    {date:'8/8',dir:'BEAR',disp:70,pb:'NO – ran away',lvl:'NO level',ht:'BELOW (bear)',cetx:'DOWN',align:'PARTIAL',took:'NO – no setup',maxr:null,note:'gapped and went, never pulled back — no entry'},
+    {date:'8/11',dir:'BEAR',disp:130,pb:'YES – full',lvl:'YES – on a level',ht:'BELOW (bear)',cetx:'DOWN',align:'ALL AGREE',took:'YES',maxr:-1,note:'looked perfect, pullback kept going against me, stopped'}
+  ];
+  save(rows);render();
+}
+
+render();
+</script>
+</body>
+</html>
