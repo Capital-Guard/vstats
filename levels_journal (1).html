@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NQ Levels Journal</title>
+<style>
+  :root{
+    --bg:#fbfcfd; --panel:#ffffff; --ink:#1b2430; --muted:#6b7684; --faint:#9aa4b0;
+    --line:#e6e9ee; --line2:#eef1f5;
+    --res:#c0392b; --resbg:#fbecea;      /* resistance / calls (above 0) */
+    --sup:#1c8b57; --supbg:#e9f6ef;      /* support / puts (below 0) */
+    --zero:#3a4656; --accent:#2f6f8f; --accentbg:#eaf2f6;
+    --chip:#eef2f6; --good:#1c8b57; --warn:#b9791f;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45}
+  .wrap{max-width:1120px;margin:0 auto;padding:26px 22px 80px}
+  h1{font-size:20px;font-weight:650;letter-spacing:-.01em;margin:0}
+  h2{font-size:12px;font-weight:650;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 12px}
+  .sub{color:var(--muted);font-size:12.5px;margin-top:3px}
+  .mono{font-family:var(--mono)}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+  .tools{display:flex;gap:8px;flex-wrap:wrap}
+  button,.filebtn{font-family:var(--sans);font-size:12.5px;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    padding:7px 12px;border-radius:7px;cursor:pointer;transition:.12s}
+  button:hover,.filebtn:hover{border-color:var(--accent);color:var(--accent)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.primary:hover{filter:brightness(1.06);color:#fff}
+  button.ghost{color:var(--muted)}
+  button:disabled{cursor:not-allowed;opacity:1}
+  button.primary:disabled{background:#e3e8ee;border-color:#e3e8ee;color:#7a8492}
+  button.primary:disabled:hover{filter:none;color:#7a8492}
+  button:disabled:hover{border-color:var(--line)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:18px}
+  .grid{display:grid;gap:14px}
+  .row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+  .field{display:flex;flex-direction:column;gap:5px}
+  label.lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  input[type=date],input[type=number],input[type=time]{font-family:var(--mono);font-size:14px;border:1px solid var(--line);border-radius:7px;
+    padding:8px 10px;width:150px;background:#fff;color:var(--ink)}
+  input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accentbg)}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .seg button{border:none;border-radius:0;padding:8px 13px;background:#fff;color:var(--muted);font-family:var(--mono)}
+  .seg button+button{border-left:1px solid var(--line)}
+  .seg button.on{background:var(--accentbg);color:var(--accent);font-weight:650}
+  .seg.dir button.buy.on{background:var(--supbg);color:var(--sup)}
+  .seg.dir button.sell.on{background:var(--resbg);color:var(--res)}
+  .filebtn{display:inline-flex;align-items:center;gap:7px}
+  input[type=file]{display:none}
+  .hint{color:var(--faint);font-size:12px}
+  .csvline{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:10px}
+  .csvline b{color:var(--ink);font-weight:600}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:20px;background:var(--chip);color:var(--muted)}
+  .pill.res{background:var(--resbg);color:var(--res)} .pill.sup{background:var(--supbg);color:var(--sup)}
+  .pill.buy{background:var(--supbg);color:var(--sup)} .pill.sell{background:var(--resbg);color:var(--res)}
+  .pill.s835{background:#f1edf7;color:#6b4fa0} .pill.s940{background:#eaf2f6;color:var(--accent)}
+  /* preview + detail */
+  .preview{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:16px;
+    border-top:1px dashed var(--line);padding-top:16px}
+  .stat{background:#fff;border:1px solid var(--line2);border-radius:9px;padding:11px 13px}
+  .stat .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:5px}
+  .stat .v{font-family:var(--mono);font-size:17px;font-weight:600;letter-spacing:-.01em}
+  .stat .v small{font-size:11px;color:var(--muted);font-weight:400}
+  .v.res{color:var(--res)} .v.sup{color:var(--sup)} .v.neu{color:var(--ink)}
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:right;padding:9px 10px;border-bottom:1px solid var(--line);font-weight:600;white-space:nowrap}
+  th.l,td.l{text-align:left}
+  td{padding:9px 10px;border-bottom:1px solid var(--line2);font-family:var(--mono);text-align:right;white-space:nowrap}
+  tr.entry{cursor:pointer} tr.entry:hover td{background:#f7fafc}
+  td .x{color:var(--faint);font-family:var(--sans);cursor:pointer;padding:0 4px}
+  td .x:hover{color:var(--res)}
+  .num-pos{color:var(--res)} .num-neg{color:var(--sup)}
+  .detail td{background:#fafbfc;border-bottom:1px solid var(--line)}
+  .detailwrap{display:grid;grid-template-columns:220px 1fr;gap:22px;padding:6px 4px 12px}
+  @media(max-width:720px){.detailwrap{grid-template-columns:1fr}}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-family:var(--mono);font-size:12.5px}
+  .kv .kk{color:var(--muted)} .kv .vv{text-align:right}
+  .gaps{margin-top:10px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .gaps b{color:var(--ink)}
+  .empty{color:var(--faint);text-align:center;padding:34px;font-size:13px}
+  /* model panel */
+  .modelgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+  .mcard{border:1px solid var(--line2);border-radius:10px;padding:14px 15px}
+  .mcard h3{margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:650}
+  .mrow{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0;border-top:1px solid var(--line2)}
+  .mrow:first-of-type{border-top:none}
+  .mrow .ml{color:var(--muted);font-size:12px}
+  .mrow .mv{font-family:var(--mono);font-size:14px;font-weight:600}
+  .big{font-family:var(--mono);font-size:26px;font-weight:650;letter-spacing:-.02em}
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .cmp .box{border:1px solid var(--line2);border-radius:9px;padding:12px;text-align:center}
+  .cmp .box .t{font-family:var(--mono);font-size:11px;margin-bottom:6px}
+  .cmp .box .n{font-family:var(--mono);font-size:22px;font-weight:650}
+  .cmp .box .d{font-size:10.5px;color:var(--muted);margin-top:3px}
+  .cmp .box.win{border-color:var(--sup);background:var(--supbg)}
+  .filters{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px}
+  @media(max-width:680px){.summary{grid-template-columns:1fr}}
+  .sumtile{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:linear-gradient(180deg,#ffffff,#f8fbfd)}
+  .sumtile .st{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:650;margin-bottom:9px}
+  .sumtile .sbig{font-family:var(--mono);font-size:23px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+  .sumtile .ssub{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:7px}
+  .dn{color:var(--sup)} .up{color:var(--res)}
+  .toggle{margin:2px 0 16px;display:flex;align-items:center;gap:12px}
+  footer{color:var(--faint);font-size:11.5px;text-align:center;margin-top:26px;line-height:1.7}
+  .note{font-size:12px;color:var(--muted);background:#fafbfc;border:1px solid var(--line2);border-radius:8px;padding:10px 12px;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div>
+      <h1>NQ Levels Journal</h1>
+      <div class="sub">Load the day's walls CSV, log how price used the levels, build the edge over time.</div>
+    </div>
+    <div class="tools">
+      <button class="ghost" id="btnExport">Export data</button>
+      <label class="filebtn ghost">Import data<input type="file" id="impData" accept=".json"></label>
+      <button class="ghost" id="btnClear">Clear all</button>
+    </div>
+  </div>
+
+  <!-- NEW ENTRY -->
+  <div class="card">
+    <h2>New entry</h2>
+    <div class="row">
+      <div class="field">
+        <label class="lbl">Date</label>
+        <input type="date" id="fDate">
+      </div>
+      <div class="field">
+        <label class="lbl">Scan time</label>
+        <div class="seg" id="segScan">
+          <button data-v="8:35" class="on">8:35 pre-open</button>
+          <button data-v="9:40">9:40 post-open</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="lbl">Direction called (60)</label>
+        <div class="seg dir" id="segDir">
+          <button data-v="BUY" class="buy">BUY</button>
+          <button data-v="SELL" class="sell">SELL</button>
+          <button data-v="—" class="on">none</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="lbl">Signal time (ET)</label>
+        <input type="time" id="fTime">
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:16px">
+      <div class="field">
+        <label class="lbl">Levels CSV</label>
+        <label class="filebtn">Load walls CSV<input type="file" id="fCsv" accept=".csv"></label>
+      </div>
+      <div class="field">
+        <label class="lbl">Session high</label>
+        <input type="number" id="fHigh" step="0.25" placeholder="29483">
+      </div>
+      <div class="field">
+        <label class="lbl">Session low</label>
+        <input type="number" id="fLow" step="0.25" placeholder="29202">
+      </div>
+      <div class="field" style="flex:1;align-items:flex-end">
+        <button class="primary" id="btnSave" disabled>Save entry</button>
+      </div>
+    </div>
+
+    <div class="csvline" id="csvSummary"><span class="hint">No CSV loaded. The file is the one produced by your levels script (type, nq_level, vs_spot, oi, wall).</span></div>
+    <div id="livePreview"></div>
+  </div>
+
+  <!-- JOURNAL -->
+  <div class="card">
+    <h2>Journal</h2>
+    <div id="journalBody"></div>
+  </div>
+
+  <!-- MODEL -->
+  <div class="card">
+    <h2>Statistical model</h2>
+    <div class="filters">
+      <span class="hint">Scan</span>
+      <div class="seg" id="fltScan">
+        <button data-v="all" class="on">all</button>
+        <button data-v="8:35">8:35</button>
+        <button data-v="9:40">9:40</button>
+      </div>
+      <span class="hint" style="margin-left:8px">Direction</span>
+      <div class="seg" id="fltDir">
+        <button data-v="all" class="on">all</button>
+        <button data-v="BUY">BUY</button>
+        <button data-v="SELL">SELL</button>
+      </div>
+    </div>
+    <div id="modelBody"></div>
+  </div>
+
+  <footer>
+    Saved in this browser (localStorage). Use <b>Export data</b> to back up or move it. Every stat is derived from the CSV levels
+    plus the high/low you enter — the more days you log, the more reliable the model.
+  </footer>
+</div>
+
+<script>
+"use strict";
+const LS_KEY="nqLevelsJournal.v1";
+const $=s=>document.querySelector(s);
+const fmt=(n,d=0)=>n==null||isNaN(n)?"—":(+n).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+const signed=(n,d=0)=>n==null||isNaN(n)?"—":(n>=0?"+":"")+fmt(n,d);
+
+/* ---------- state ---------- */
+let entries=load();
+let draft={levels:null, spot:null, scan:"8:35", dir:"—"};
+
+/* ---------- storage ---------- */
+function load(){ try{return JSON.parse(localStorage.getItem(LS_KEY))||[]}catch(e){return []} }
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(entries)); }
+
+/* ---------- CSV ---------- */
+function parseCSV(text){
+  const lines=text.replace(/\r/g,"").split("\n").filter(l=>l.trim().length);
+  if(!lines.length) return [];
+  const head=lines[0].toLowerCase().split(",").map(s=>s.trim());
+  const iType=head.indexOf("type"), iNq=head.indexOf("nq_level"),
+        iVs=head.indexOf("vs_spot"), iOi=head.indexOf("oi"), iWall=head.indexOf("wall");
+  const out=[];
+  for(let k=1;k<lines.length;k++){
+    const c=lines[k].split(",");
+    const nq=parseFloat(c[iNq]);
+    if(isNaN(nq)) continue;
+    out.push({
+      type:(c[iType]||"").trim().toUpperCase().slice(0,1),
+      nq:nq,
+      vsSpot: iVs>=0?parseFloat(c[iVs]):null,
+      oi: iOi>=0?parseInt(c[iOi],10)||0:0,
+      wall: iWall>=0 ? /wall/i.test(c[iWall]||"") : false
+    });
+  }
+  return out;
+}
+function dedupeByNq(levels){
+  const seen=new Set(), out=[];
+  for(const l of levels){ if(seen.has(l.nq))continue; seen.add(l.nq); out.push(l); }
+  return out;
+}
+
+/* ---------- per-entry computation ---------- */
+function computeEntry(levelsRaw, highIn, lowIn){
+  let high=+highIn, low=+lowIn;
+  if(high<low){ const t=high; high=low; low=t; }
+  const levels=dedupeByNq(levelsRaw).slice().sort((a,b)=>a.nq-b.nq);
+  // spot / 0-line: from vsSpot if present, else the boundary between highest sub-... use vsSpot
+  let spot=null;
+  const withVs=levels.find(l=>l.vsSpot!=null && !isNaN(l.vsSpot));
+  if(withVs) spot=+(withVs.nq-withVs.vsSpot).toFixed(2);
+  else if(levels.length){ // fallback: midpoint of the type flip
+    const calls=levels.filter(l=>l.type==="C"), puts=levels.filter(l=>l.type==="P");
+    if(calls.length&&puts.length) spot=(Math.min(...calls.map(l=>l.nq))+Math.max(...puts.map(l=>l.nq)))/2;
+  }
+  const vsOf=l=> spot!=null ? +(l.nq-spot).toFixed(1) : (l.vsSpot??null);
+
+  const passed=levels.filter(l=>l.nq>=low && l.nq<=high);
+  const notReached=levels.length-passed.length;
+
+  // furthest reached each side of 0
+  const above=passed.filter(l=>spot!=null&&l.nq>spot);
+  const below=passed.filter(l=>spot!=null&&l.nq<spot);
+  const highestAbove= above.length? above[above.length-1] : null;
+  const lowestBelow = below.length? below[0] : null;
+  const crossedZero = spot!=null && low<spot && high>spot;
+
+  // ordered levels price DIPPED INTO, from the 0-line outward (traversal order leaving the open)
+  const belowReached=levels.filter(l=>spot!=null&&l.nq<spot&&l.nq>=low).sort((a,b)=>b.nq-a.nq); // 1st = nearest under spot
+  const aboveReached=levels.filter(l=>spot!=null&&l.nq>spot&&l.nq<=high).sort((a,b)=>a.nq-b.nq); // 1st = nearest over spot
+  const belowSeq=belowReached.map(l=>({nq:l.nq,vs:vsOf(l)}));
+  const aboveSeq=aboveReached.map(l=>({nq:l.nq,vs:vsOf(l)}));
+  const depthBelow=belowSeq.length, depthAbove=aboveSeq.length;
+
+  // gaps between consecutive passed levels, ranked
+  const gaps=[];
+  for(let i=1;i<passed.length;i++)
+    gaps.push({from:passed[i-1].nq,to:passed[i].nq,gap:+(passed[i].nq-passed[i-1].nq).toFixed(1)});
+  const gapsRanked=gaps.slice().sort((a,b)=>b.gap-a.gap);
+  const maxGap=gapsRanked.length?gapsRanked[0].gap:null;
+
+  // turning points: nearest level to each extreme + overshoot (how far price went off the level)
+  const nearest=px=>levels.length?levels.reduce((b,l)=>Math.abs(l.nq-px)<Math.abs(b.nq-px)?l:b,levels[0]):null;
+  const hiLvl=nearest(high), loLvl=nearest(low);
+  const overHigh=hiLvl?+(high-hiLvl.nq).toFixed(1):null;   // + = poked above the level
+  const overLow =loLvl?+(low -loLvl.nq).toFixed(1):null;   // - = poked below the level
+  const hiSide=hiLvl&&spot!=null?(hiLvl.nq>=spot?"res":"sup"):null;
+  const loSide=loLvl&&spot!=null?(loLvl.nq<=spot?"sup":"res"):null;
+
+  const range=+(high-low).toFixed(1);
+  const fitError=(overHigh!=null&&overLow!=null)?+((Math.abs(overHigh)+Math.abs(overLow))/2).toFixed(1):null;
+
+  return {high,low,range,spot,
+    passedCount:passed.length,notReached,
+    highestAbove:highestAbove?{nq:highestAbove.nq,vs:vsOf(highestAbove)}:null,
+    lowestBelow: lowestBelow ?{nq:lowestBelow.nq, vs:vsOf(lowestBelow)} :null,
+    crossedZero,gapsRanked,maxGap,
+    belowSeq,aboveSeq,depthBelow,depthAbove,
+    hiLvl:hiLvl?{nq:hiLvl.nq,vs:vsOf(hiLvl)}:null, loLvl:loLvl?{nq:loLvl.nq,vs:vsOf(loLvl)}:null,
+    overHigh,overLow,hiSide,loSide,fitError};
+}
+
+/* ---------- stats helpers ---------- */
+const median=a=>{if(!a.length)return null;const s=a.slice().sort((x,y)=>x-y),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;};
+const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+const pct=(a,p)=>{if(!a.length)return null;const s=a.slice().sort((x,y)=>x-y);const i=Math.min(s.length-1,Math.ceil(p/100*s.length)-1);return s[Math.max(0,i)];};
+const modeBucket=(a,size)=>{if(!a.length)return null;const m={};let best=null,bc=-1;for(const v of a){const b=Math.round(v/size)*size;m[b]=(m[b]||0)+1;if(m[b]>bc){bc=m[b];best=b;}}return{bucket:best,count:bc};};
+const ord2=k=>({"1":"1st","2":"2nd","3":"3rd","4+":"4th+"}[k]||k);
+
+/* ---------- rendering ---------- */
+function ladderSVG(c){
+  if(c.spot==null||!c.hiLvl) return "";
+  const W=200,H=210,padT=14,padB=14, top=c.high, bot=c.low;
+  const span=Math.max(1,(top-bot));
+  const pad=span*0.12;
+  const yMax=top+pad, yMin=bot-pad, rng=yMax-yMin;
+  const y=v=>padT+(yMax-v)/rng*(H-padT-padB);
+  const draft=[];
+  // range band
+  draft.push(`<rect x="46" y="${y(top).toFixed(1)}" width="150" height="${(y(bot)-y(top)).toFixed(1)}" fill="#eef4f8" stroke="#dbe6ee"/>`);
+  // levels within view
+  const all=(window.__draftLevels||[]).length?window.__draftLevels:null;
+  const lv=(c.__levels||[]);
+  lv.forEach(l=>{
+    if(l.nq<yMin||l.nq>yMax)return;
+    const col=l.nq>c.spot?"#c0392b":(l.nq<c.spot?"#1c8b57":"#3a4656");
+    const yy=y(l.nq).toFixed(1);
+    draft.push(`<line x1="46" y1="${yy}" x2="196" y2="${yy}" stroke="${col}" stroke-width="${l.wall?2:1}" stroke-dasharray="${l.wall?"":"3 3"}" opacity="${l.nq>=c.low&&l.nq<=c.high?1:.4}"/>`);
+    draft.push(`<text x="43" y="${(+yy+3).toFixed(1)}" text-anchor="end" font-size="9" font-family="ui-monospace,monospace" fill="${col}">${fmt(l.nq)}</text>`);
+  });
+  // 0 line
+  const yz=y(c.spot).toFixed(1);
+  draft.push(`<line x1="46" y1="${yz}" x2="196" y2="${yz}" stroke="#3a4656" stroke-width="1.3"/>`);
+  draft.push(`<text x="196" y="${(+yz-3).toFixed(1)}" text-anchor="end" font-size="8.5" fill="#3a4656">0 line ${fmt(c.spot)}</text>`);
+  // high / low markers
+  draft.push(`<line x1="46" y1="${y(top).toFixed(1)}" x2="196" y2="${y(top).toFixed(1)}" stroke="#1b2430" stroke-width="1"/>`);
+  draft.push(`<text x="199" y="${(y(top)+3).toFixed(1)}" font-size="9" font-family="ui-monospace,monospace" fill="#1b2430">H ${fmt(top)}</text>`);
+  draft.push(`<line x1="46" y1="${y(bot).toFixed(1)}" x2="196" y2="${y(bot).toFixed(1)}" stroke="#1b2430" stroke-width="1"/>`);
+  draft.push(`<text x="199" y="${(y(bot)+3).toFixed(1)}" font-size="9" font-family="ui-monospace,monospace" fill="#1b2430">L ${fmt(bot)}</text>`);
+  return `<svg viewBox="0 0 ${W+40} ${H}" width="100%" style="max-width:250px">${draft.join("")}</svg>`;
+}
+
+function livePreview(){
+  const el=$("#livePreview");
+  const high=parseFloat($("#fHigh").value), low=parseFloat($("#fLow").value);
+  if(!draft.levels||isNaN(high)||isNaN(low)){ el.innerHTML=""; $("#btnSave").disabled=true; return; }
+  const c=computeEntry(draft.levels,high,low); c.__levels=dedupeByNq(draft.levels);
+  $("#btnSave").disabled=false;
+  el.innerHTML=`<div class="preview">
+    ${stat("Range",fmt(c.range)+" pts","neu")}
+    ${stat("0-line (spot)",fmt(c.spot),"neu")}
+    ${stat("Levels passed",c.passedCount+" <small>of "+(c.passedCount+c.notReached)+"</small>","neu")}
+    ${stat("Crossed 0-line",c.crossedZero?"yes":"no",c.crossedZero?"neu":"neu")}
+    ${stat("High turned at",c.hiLvl?fmt(c.hiLvl.nq):"—",c.hiSide==="res"?"res":"sup", c.overHigh!=null?("off "+signed(c.overHigh)):"")}
+    ${stat("Low turned at",c.loLvl?fmt(c.loLvl.nq):"—",c.loSide==="sup"?"sup":"res", c.overLow!=null?("off "+signed(c.overLow)):"")}
+    ${stat("Furthest above 0",c.highestAbove?signed(c.highestAbove.vs):"—","res")}
+    ${stat("Furthest below 0",c.lowestBelow?signed(c.lowestBelow.vs):"—","sup")}
+    ${stat("Dipped ↓ / pushed ↑",c.depthBelow+" / "+c.depthAbove+" <small>levels</small>","neu")}
+    ${stat("Biggest gap passed",c.maxGap!=null?fmt(c.maxGap)+" pts":"—","neu")}
+  </div>`;
+}
+function stat(k,v,cls,sub){
+  return `<div class="stat"><div class="k">${k}</div><div class="v ${cls||""}">${v}${sub?` <small>${sub}</small>`:""}</div></div>`;
+}
+
+function renderJournal(){
+  const b=$("#journalBody");
+  if(!entries.length){ b.innerHTML=`<div class="empty">No entries yet. Load a CSV, add today's high/low and direction, and save.</div>`; return; }
+  const rows=entries.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||b.id-a.id).map(e=>{
+    const c=e.c;
+    const hi=c.hiLvl?`<span class="${c.hiSide==='res'?'num-pos':'num-neg'}">${fmt(c.hiLvl.nq)}</span> <span class="hint">${signed(c.overHigh)}</span>`:"—";
+    const lo=c.loLvl?`<span class="${c.loSide==='sup'?'num-neg':'num-pos'}">${fmt(c.loLvl.nq)}</span> <span class="hint">${signed(c.overLow)}</span>`:"—";
+    return `<tr class="entry" data-id="${e.id}">
+      <td class="l">${e.date||"—"}</td>
+      <td class="l"><span class="pill ${e.scan==='8:35'?'s835':'s940'}">${e.scan}</span></td>
+      <td class="l"><span class="pill ${e.dir==='BUY'?'buy':e.dir==='SELL'?'sell':''}">${e.dir}</span></td>
+      <td class="l">${e.time||"—"}</td>
+      <td>${fmt(c.range)}</td>
+      <td>${fmt(c.spot)}</td>
+      <td><span class="num-neg">${c.depthBelow}↓</span> / <span class="num-pos">${c.depthAbove}↑</span></td>
+      <td>${hi}</td>
+      <td>${lo}</td>
+      <td>${c.fitError!=null?fmt(c.fitError):'—'}</td>
+      <td><span class="x" data-del="${e.id}" title="delete">✕</span></td>
+    </tr>`;
+  }).join("");
+  b.innerHTML=`<div style="overflow-x:auto"><table>
+    <thead><tr>
+      <th class="l">Date</th><th class="l">Scan</th><th class="l">Dir</th><th class="l">Time ET</th>
+      <th>Range</th><th>0-line</th><th>Dip ↓/↑</th>
+      <th>High turn / off</th><th>Low turn / off</th><th>Fit err</th><th></th>
+    </tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function renderDetail(e){
+  const c=e.c;
+  c.__levels=e.levels?dedupeByNq(e.levels):[];
+  const gaps=c.gapsRanked.slice(0,4).map((g,i)=>`<div><b>${i+1}.</b> ${fmt(g.gap)} pts <span class="hint">(${fmt(g.from)}→${fmt(g.to)})</span></div>`).join("")||"<span class='hint'>only one level in range</span>";
+  const seq=(arr,cls)=>arr.length?arr.map((l,i)=>`<span class="pill ${cls}">${i+1}. ${fmt(l.nq)} <span class="hint">${signed(l.vs)}</span></span>`).join(" "):"<span class='hint'>none reached</span>";
+  const ord=["1st","2nd","3rd","4th","5th","6th"];
+  return `<td colspan="11"><div class="detailwrap">
+    <div>${ladderSVG(c)}</div>
+    <div>
+      <div class="kv">
+        <div class="kk">Direction called</div><div class="vv">${e.dir}${e.time?` @ ${e.time} ET`:""}</div>
+        <div class="kk">Scan used</div><div class="vv">${e.scan}</div>
+        <div class="kk">Range (H−L)</div><div class="vv">${fmt(c.high)} − ${fmt(c.low)} = ${fmt(c.range)}</div>
+        <div class="kk">0-line (spot)</div><div class="vv">${fmt(c.spot)}</div>
+        <div class="kk">Crossed 0-line</div><div class="vv">${c.crossedZero?'yes — traded both sides':'no — stayed one side'}</div>
+        <div class="kk">High turned at</div><div class="vv">${c.hiLvl?fmt(c.hiLvl.nq)+' · poked '+signed(c.overHigh)+' pts':'—'}</div>
+        <div class="kk">Low turned at</div><div class="vv">${c.loLvl?fmt(c.loLvl.nq)+' · poked '+signed(c.overLow)+' pts':'—'}</div>
+        <div class="kk">Levels passed</div><div class="vv">${c.passedCount} of ${c.passedCount+c.notReached}</div>
+      </div>
+      <div class="gaps">
+        <div style="color:var(--ink);font-weight:600;margin:2px 0 5px">Dipped into ↓ ${c.depthBelow?`(reached ${ord[c.depthBelow-1]||c.depthBelow+"th"} put)`:""}</div>
+        <div>${seq(c.belowSeq,"sup")}</div>
+        <div style="color:var(--ink);font-weight:600;margin:12px 0 5px">Pushed into ↑ ${c.depthAbove?`(reached ${ord[c.depthAbove-1]||c.depthAbove+"th"} call)`:""}</div>
+        <div>${seq(c.aboveSeq,"res")}</div>
+      </div>
+      <div class="gaps"><div style="color:var(--ink);font-weight:600;margin:12px 0 4px">Biggest gaps between passed levels</div>${gaps}</div>
+    </div>
+  </div></td>`;
+}
+
+/* ---------- statistical model ---------- */
+let fScan="all",fDir="all",showDetail=false;
+function renderModel(){
+  const b=$("#modelBody");
+  let set=entries.filter(e=>(fScan==="all"||e.scan===fScan)&&(fDir==="all"||e.dir===fDir));
+  if(!set.length){ b.innerHTML=`<div class="empty">No entries match these filters yet.</div>`; return; }
+
+  const C=set.map(e=>e.c);
+  const n=C.length;
+  const crossed=C.filter(c=>c.crossedZero).length;
+  // stop guidance: pokes beyond the turning level
+  const resPokes=C.filter(c=>c.overHigh!=null&&c.overHigh>0).map(c=>c.overHigh);      // high above a level
+  const supPokes=C.filter(c=>c.overLow!=null&&c.overLow<0).map(c=>-c.overLow);         // low below a level
+  // accuracy = how close turns landed to the nearest level
+  const fitAll=C.map(c=>c.fitError).filter(v=>v!=null);
+  const fitBy=t=>{const a=entries.filter(e=>e.scan===t&&(fDir==="all"||e.dir===fDir)).map(e=>e.c.fitError).filter(v=>v!=null);return{n:a.length,m:mean(a)};};
+  const fit835=fitBy("8:35"), fit940=fitBy("9:40");
+  // how far price runs off the 0-line
+  const aboveVs=C.filter(c=>c.highestAbove).map(c=>c.highestAbove.vs);
+  const belowVs=C.filter(c=>c.lowestBelow).map(c=>Math.abs(c.lowestBelow.vs));
+  // gaps
+  const allGaps=[]; C.forEach(c=>c.gapsRanked.forEach(g=>allGaps.push(g.gap)));
+  const maxGaps=C.map(c=>c.maxGap).filter(v=>v!=null);
+  const gapMode=modeBucket(allGaps,25);
+  // turning side frequency
+  const hiRes=C.filter(c=>c.hiSide==="res").length, loSup=C.filter(c=>c.loSide==="sup").length;
+
+  // depth: how deep price dipped into each side (where it turned in the stack)
+  const depthDist=(vals)=>{const b={1:0,2:0,3:0,"4+":0};let tot=0;vals.forEach(d=>{if(d<1)return;tot++;if(d>=4)b["4+"]++;else b[d]++;});return{b,tot};};
+  const dBelow=depthDist(C.map(c=>c.depthBelow));
+  const dAbove=depthDist(C.map(c=>c.depthAbove));
+  const depthRows=(dist)=>{
+    if(!dist.tot) return `<div class="mrow"><span class="ml">no days reached this side</span><span class="mv">—</span></div>`;
+    const ord={1:"1st",2:"2nd",3:"3rd","4+":"4th+"};
+    return Object.keys(dist.b).map(k=>`<div class="mrow"><span class="ml">${ord[k]} level</span><span class="mv">${fmt(100*dist.b[k]/dist.tot)}% <span class="hint">(${dist.b[k]})</span></span></div>`).join("");
+  };
+  const modeDepth=(dist)=>{let bk=null,bc=-1;for(const k in dist.b){if(dist.b[k]>bc){bc=dist.b[k];bk=k;}}return dist.tot?{k:bk,pct:100*bc/dist.tot}:null;};
+  const mdB=modeDepth(dBelow), mdA=modeDepth(dAbove);
+
+  // signal time spread
+  const times=set.map(e=>e.time).filter(Boolean).sort();
+
+  const stopBox=(label,arr,dir)=>{
+    if(!arr.length) return `<div class="mrow"><span class="ml">${label}</span><span class="mv">—</span></div>`;
+    return `<div class="mrow"><span class="ml">${label} · median</span><span class="mv">${fmt(median(arr),1)}</span></div>
+            <div class="mrow"><span class="ml">${label} · 80th pct</span><span class="mv">${fmt(pct(arr,80),1)}</span></div>
+            <div class="mrow"><span class="ml">${label} · max</span><span class="mv">${fmt(Math.max(...arr),1)}</span></div>`;
+  };
+
+  const better = (fit835.m!=null&&fit940.m!=null) ? (fit835.m<fit940.m?"8:35":"9:40") : null;
+
+  // ---- compact "3 things" summary — entry side follows the direction filter ----
+  const sumTile=(title,sub,big,ssub)=>`<div class="sumtile"><div class="st">${title}${sub?` · ${sub}`:""}</div><div class="sbig">${big}</div><div class="ssub">${ssub}</div></div>`;
+  const gapBig = allGaps.length? fmt(median(allGaps))+" pts" : "—";
+  const gapSub = "biggest seen "+(maxGaps.length?fmt(Math.max(...maxGaps)):"—")+" pts";
+  let tDepth,tStop;
+  if(fDir==="BUY"){
+    tDepth=sumTile("Dips to (from 0)","puts · "+dBelow.tot+" days", mdB?ord2(mdB.k)+" level":"—", mdB?fmt(mdB.pct)+"% turned there":"no days below 0");
+    tStop =sumTile("Stop to survive","buying the dip", supPokes.length?fmt(Math.max(...supPokes))+" pts":"—", supPokes.length?"80th pct "+fmt(pct(supPokes,80))+" pts":"no adverse pokes");
+  }else if(fDir==="SELL"){
+    tDepth=sumTile("Pushes to (from 0)","calls · "+dAbove.tot+" days", mdA?ord2(mdA.k)+" level":"—", mdA?fmt(mdA.pct)+"% turned there":"no days above 0");
+    tStop =sumTile("Stop to survive","selling the rip", resPokes.length?fmt(Math.max(...resPokes))+" pts":"—", resPokes.length?"80th pct "+fmt(pct(resPokes,80))+" pts":"no adverse pokes");
+  }else{
+    tDepth=sumTile("Level reached from 0","↓buy · ↑sell",
+      `<span class="dn">↓ ${mdB?ord2(mdB.k):"—"}</span>&nbsp;&nbsp;<span class="up">↑ ${mdA?ord2(mdA.k):"—"}</span>`,
+      `↓ ${mdB?fmt(mdB.pct)+"%":"—"} · ↑ ${mdA?fmt(mdA.pct)+"%":"—"}`);
+    tStop=sumTile("Stop to survive worst","↓long · ↑short",
+      `<span class="dn">↓ ${supPokes.length?fmt(Math.max(...supPokes)):"—"}</span>&nbsp;&nbsp;<span class="up">↑ ${resPokes.length?fmt(Math.max(...resPokes)):"—"}</span>`,
+      `80th: ↓ ${supPokes.length?fmt(pct(supPokes,80)):"—"} · ↑ ${resPokes.length?fmt(pct(resPokes,80)):"—"}`);
+  }
+  const summaryHTML=`<div class="summary">${tDepth}${sumTile("Gap between levels","typical spacing",gapBig,gapSub)}${tStop}</div>`;
+  const toggleHTML=`<div class="toggle"><button data-toggle-detail>${showDetail?"Hide detailed stats":"Show detailed stats"}</button><span class="hint">n=${n} days · treat as a hint under ~20</span></div>`;
+
+  b.innerHTML=summaryHTML+toggleHTML+`
+  <div class="modelgrid" id="modelDetail" style="display:${showDetail?"grid":"none"}">
+
+    <div class="mcard">
+      <h3>Sample</h3>
+      <div class="big">${n}</div>
+      <div class="mrow"><span class="ml">days logged</span><span class="mv"></span></div>
+      <div class="mrow"><span class="ml">crossed the 0-line</span><span class="mv">${fmt(100*crossed/n)}%</span></div>
+      <div class="mrow"><span class="ml">high rejected resistance</span><span class="mv">${fmt(100*hiRes/n)}%</span></div>
+      <div class="mrow"><span class="ml">low bounced support</span><span class="mv">${fmt(100*loSup/n)}%</span></div>
+    </div>
+
+    <div class="mcard">
+      <h3>Stop guidance — poke beyond a level</h3>
+      ${stopBox("Above resistance (shorts)",resPokes)}
+      <div style="height:8px"></div>
+      ${stopBox("Below support (longs)",supPokes)}
+      <div class="note" style="margin-top:10px">How far price wicks past a level before turning. A stop a touch beyond the 80th-pct poke survives most stalls.</div>
+    </div>
+
+    <div class="mcard">
+      <h3>Scan accuracy — turn vs nearest level</h3>
+      <div class="cmp">
+        <div class="box ${better==='8:35'?'win':''}"><div class="t">8:35 pre-open</div><div class="n">${fit835.m!=null?fmt(fit835.m,1):'—'}</div><div class="d">avg miss · ${fit835.n} days</div></div>
+        <div class="box ${better==='9:40'?'win':''}"><div class="t">9:40 post-open</div><div class="n">${fit940.m!=null?fmt(fit940.m,1):'—'}</div><div class="d">avg miss · ${fit940.n} days</div></div>
+      </div>
+      <div class="note" style="margin-top:10px">Average distance (pts) between the day's high/low and the nearest level. Lower = that scan's levels landed closer to the real turns. ${better?`<b>${better}</b> is tighter so far.`:''}</div>
+    </div>
+
+    <div class="mcard">
+      <h3>How far price runs off 0</h3>
+      <div class="mrow"><span class="ml">above 0 · median</span><span class="mv num-pos">${aboveVs.length?signed(median(aboveVs)):'—'}</span></div>
+      <div class="mrow"><span class="ml">above 0 · max</span><span class="mv num-pos">${aboveVs.length?signed(Math.max(...aboveVs)):'—'}</span></div>
+      <div class="mrow"><span class="ml">below 0 · median</span><span class="mv num-neg">${belowVs.length?'−'+fmt(median(belowVs)):'—'}</span></div>
+      <div class="mrow"><span class="ml">below 0 · max</span><span class="mv num-neg">${belowVs.length?'−'+fmt(Math.max(...belowVs)):'—'}</span></div>
+    </div>
+
+    <div class="mcard">
+      <h3>Gaps between levels</h3>
+      <div class="mrow"><span class="ml">most common gap</span><span class="mv">${gapMode?fmt(gapMode.bucket)+' pts':'—'}</span></div>
+      <div class="mrow"><span class="ml">median passed gap</span><span class="mv">${allGaps.length?fmt(median(allGaps)):'—'}</span></div>
+      <div class="mrow"><span class="ml">median day's biggest gap</span><span class="mv">${maxGaps.length?fmt(median(maxGaps)):'—'}</span></div>
+      <div class="mrow"><span class="ml">largest gap seen</span><span class="mv">${maxGaps.length?fmt(Math.max(...maxGaps)):'—'}</span></div>
+    </div>
+
+    <div class="mcard">
+      <h3>Levels dipped into — where it turned</h3>
+      <div class="mrow"><span class="ml" style="color:var(--sup);font-weight:600">Below 0 (puts) · ${dBelow.tot} days</span><span class="mv">${mdB?ord2(mdB.k)+" "+fmt(mdB.pct)+"%":"—"}</span></div>
+      ${depthRows(dBelow)}
+      <div style="height:10px"></div>
+      <div class="mrow"><span class="ml" style="color:var(--res);font-weight:600">Above 0 (calls) · ${dAbove.tot} days</span><span class="mv">${mdA?ord2(mdA.k)+" "+fmt(mdA.pct)+"%":"—"}</span></div>
+      ${depthRows(dAbove)}
+      <div class="note" style="margin-top:10px">How far into the level stack price reached before turning — i.e. does the pullback stop at the 1st shelf or dig to the 2nd/3rd. Filter by direction to isolate the entry side.</div>
+    </div>
+
+    <div class="mcard">
+      <h3>Signal time (ET)</h3>
+      ${times.length?`<div class="big" style="font-size:18px">${times[0]} – ${times[times.length-1]}</div>
+        <div class="mrow"><span class="ml">earliest</span><span class="mv">${times[0]}</span></div>
+        <div class="mrow"><span class="ml">latest</span><span class="mv">${times[times.length-1]}</span></div>
+        <div class="mrow"><span class="ml">logged with a time</span><span class="mv">${times.length} / ${set.length}</span></div>`
+        :`<div class="empty" style="padding:14px">No signal times logged yet.</div>`}
+      <div class="note" style="margin-top:10px">When the 60 actually fired. Watch for clustering (e.g. right at/before the open on OPEX).</div>
+    </div>
+
+  </div>`;
+}
+
+/* ---------- events ---------- */
+$("#fCsv").addEventListener("change",ev=>{
+  const f=ev.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    const lv=parseCSV(r.result);
+    if(!lv.length){ $("#csvSummary").innerHTML=`<span style="color:var(--res)">Couldn't read any levels — check it's the walls CSV with an nq_level column.</span>`; draft.levels=null; livePreview(); return; }
+    draft.levels=lv;
+    const c=computeEntry(lv, Math.max(...lv.map(l=>l.nq)), Math.min(...lv.map(l=>l.nq)));
+    const calls=lv.filter(l=>l.type==="C").length, puts=lv.filter(l=>l.type==="P").length, walls=lv.filter(l=>l.wall).length;
+    $("#csvSummary").innerHTML=`<b>${f.name}</b> — ${lv.length} levels (${calls} call · ${puts} put${walls?` · ${walls} wall`:""}). 0-line ≈ <b>${fmt(c.spot)}</b>.`;
+    livePreview();
+  };
+  r.readAsText(f);
+});
+$("#fHigh").addEventListener("input",livePreview);
+$("#fLow").addEventListener("input",livePreview);
+
+$("#segScan").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  $("#segScan").querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");draft.scan=b.dataset.v;});
+$("#segDir").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  $("#segDir").querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");draft.dir=b.dataset.v;});
+
+$("#btnSave").addEventListener("click",()=>{
+  const high=parseFloat($("#fHigh").value), low=parseFloat($("#fLow").value);
+  if(!draft.levels||isNaN(high)||isNaN(low))return;
+  const c=computeEntry(draft.levels,high,low);
+  entries.push({id:Date.now(),date:$("#fDate").value||new Date().toISOString().slice(0,10),
+    scan:draft.scan,dir:draft.dir,time:$("#fTime").value||"",high,low,levels:draft.levels,c});
+  save(); renderAll();
+  $("#fHigh").value="";$("#fLow").value="";$("#livePreview").innerHTML="";$("#btnSave").disabled=true;
+  $("#fCsv").value="";draft.levels=null;
+  $("#csvSummary").innerHTML=`<span class="hint">Saved. Load the next day's CSV to log another.</span>`;
+});
+
+$("#journalBody").addEventListener("click",e=>{
+  const del=e.target.closest("[data-del]");
+  if(del){ e.stopPropagation(); if(confirm("Delete this entry?")){ entries=entries.filter(x=>x.id!=del.dataset.del); save(); renderAll(); } return; }
+  const row=e.target.closest("tr.entry"); if(!row)return;
+  const id=row.dataset.id, ex=row.nextElementSibling;
+  if(ex&&ex.classList.contains("detail")){ ex.remove(); return; }
+  document.querySelectorAll("tr.detail").forEach(x=>x.remove());
+  const ent=entries.find(x=>x.id==id); if(!ent)return;
+  const tr=document.createElement("tr"); tr.className="detail"; tr.innerHTML=renderDetail(ent);
+  row.after(tr);
+});
+
+$("#fltScan").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  $("#fltScan").querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");fScan=b.dataset.v;renderModel();});
+$("#fltDir").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  $("#fltDir").querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");fDir=b.dataset.v;renderModel();});
+$("#modelBody").addEventListener("click",e=>{if(e.target.closest("[data-toggle-detail]")){showDetail=!showDetail;renderModel();}});
+
+$("#btnExport").addEventListener("click",()=>{
+  const blob=new Blob([JSON.stringify(entries,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="nq_levels_journal_"+new Date().toISOString().slice(0,10)+".json";a.click();
+});
+$("#impData").addEventListener("change",ev=>{
+  const f=ev.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{
+    const imp=JSON.parse(r.result); if(!Array.isArray(imp))throw 0;
+    const byKey={}; [...entries,...imp].forEach(e=>{byKey[(e.date||"")+"|"+(e.scan||"")]=e;});
+    entries=Object.values(byKey); save(); renderAll();
+    alert("Imported. Journal now has "+entries.length+" entries.");
+  }catch(e){alert("That file isn't a valid journal export.");}};
+  r.readAsText(f); ev.target.value="";
+});
+$("#btnClear").addEventListener("click",()=>{if(confirm("Delete ALL journal entries in this browser? Export first if unsure.")){entries=[];save();renderAll();}});
+
+function renderAll(){ renderJournal(); renderModel(); }
+$("#fDate").value=new Date().toISOString().slice(0,10);
+renderAll();
+</script>
+</body>
+</html>
