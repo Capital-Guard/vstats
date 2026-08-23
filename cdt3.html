@@ -423,7 +423,7 @@ function setBadge(n){unseen=n;const b=$("#bellBadge");b.textContent=n;b.classLis
 /* ---------- live fetch ----------
    Set PROXY_URL to your Cloudflare Worker (e.g. "https://fmp-proxy.you.workers.dev")
    to keep the key server-side. Leave it "" to call FMP directly with the key field. */
-const PROXY_URL="";
+const PROXY_URL="https://fmp-proxy.yourfx.workers.dev";
 async function pullFeed(key,limit){
   const useProxy=!!PROXY_URL;
   const base=useProxy? PROXY_URL.replace(/\/+$/,"")+"/" : "https://financialmodelingprep.com/stable/";
