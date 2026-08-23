@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Congress Trade Desk</title>
+<style>
+  :root{
+    --bg:#0a0e14; --panel:#111722; --panel2:#0d131d; --line:#1e2836; --line2:#2a3646;
+    --txt:#e6edf5; --muted:#7d8ba0; --muted2:#576073;
+    --buy:#2ec76b; --buy-bg:rgba(46,199,107,.12);
+    --sell:#f2555a; --sell-bg:rgba(242,85,90,.12);
+    --accent:#37b6c4; --accent2:#e8b04b; --gold:#e8b04b;
+    --dem:#4b8bf5; --rep:#f0603f;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--txt);font-family:var(--sans);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{max-width:1400px;margin:0 auto;padding:0 20px 60px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  header{position:sticky;top:0;z-index:50;background:linear-gradient(180deg,#0b1119,#0a0e14);border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
+  .head-in{max-width:1400px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:11px;margin-right:auto}
+  .logo{width:34px;height:34px;border-radius:7px;background:linear-gradient(135deg,#153542,#0e2027);border:1px solid #21414c;display:grid;place-items:center;color:var(--accent);font-weight:800;font-family:var(--mono);font-size:16px}
+  .brand h1{font-size:16px;font-weight:700;letter-spacing:.3px}
+  .brand .sub{font-size:11px;color:var(--muted);font-family:var(--mono);letter-spacing:.5px}
+  .status{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;padding:5px 10px;border:1px solid var(--line2);border-radius:6px;background:var(--panel2)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
+  .dot.live{background:var(--buy);box-shadow:0 0 8px var(--buy);animation:pulse 2s infinite}
+  @keyframes pulse{50%{opacity:.4}}
+  input,select,button{font-family:inherit;font-size:13px}
+  .field{background:var(--panel2);border:1px solid var(--line2);color:var(--txt);border-radius:6px;padding:7px 9px}
+  .field::placeholder{color:var(--muted2)}
+  .btn{background:#16202e;border:1px solid var(--line2);color:var(--txt);border-radius:6px;padding:7px 12px;cursor:pointer;font-weight:600;white-space:nowrap;transition:.15s}
+  .btn:hover{border-color:var(--accent);color:#fff}
+  .btn.primary{background:var(--accent);color:#04222a;border-color:var(--accent)}
+  .btn.on{background:var(--buy);color:#05230f;border-color:var(--buy)}
+  .btn.sm{padding:5px 9px;font-size:12px}
+  .bell{position:relative;background:var(--panel2);border:1px solid var(--line2);border-radius:8px;width:38px;height:36px;cursor:pointer;font-size:16px;color:var(--txt)}
+  .bell:hover{border-color:var(--accent)}
+  .bell .badge{position:absolute;top:-7px;right:-7px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--sell);color:#fff;font:700 11px var(--mono);display:none;place-items:center}
+  .bell .badge.show{display:grid}
+
+  .stats{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:20px 0}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+  .stat .lbl{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+  .stat .val{font-family:var(--mono);font-size:22px;font-weight:700;margin-top:4px;letter-spacing:-.5px}
+  .stat .val small{font-size:12px;color:var(--muted);font-weight:400}
+
+  .grid{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .panel.flash{animation:flash 1s ease}
+  @keyframes flash{0%{box-shadow:0 0 0 0 rgba(55,182,196,.5)}100%{box-shadow:0 0 0 8px rgba(55,182,196,0)}}
+  .p-head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .p-head h2{font-size:13px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#cdd7e3}
+  .p-head .hint{font-size:11px;color:var(--muted);font-family:var(--mono)}
+  .p-head .spacer{margin-left:auto}
+  .seg{display:flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden}
+  .seg button{background:var(--panel2);border:0;color:var(--muted);padding:5px 10px;cursor:pointer;font-size:11.5px;font-weight:600;font-family:var(--mono)}
+  .seg button.on{background:#1b2634;color:#fff}
+
+  .lb{display:flex;flex-direction:column}
+  .lb-row{display:grid;grid-template-columns:34px 1fr 92px 108px 90px;gap:10px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--line);transition:.12s}
+  .lb-row:hover{background:#0e1621} .lb-row:last-child{border-bottom:0}
+  .rank{font-family:var(--mono);font-weight:700;color:var(--muted);text-align:center;font-size:15px}
+  .rank.top{color:var(--gold)}
+  .who{display:flex;align-items:center;gap:10px;min-width:0}
+  .ava{width:34px;height:34px;border-radius:8px;flex:none;display:grid;place-items:center;font-weight:700;font-family:var(--mono);font-size:13px;color:#fff}
+  .who .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .who .meta{font-size:11px;color:var(--muted);font-family:var(--mono)}
+  .pill{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;font-family:var(--mono);vertical-align:middle}
+  .pill.D{background:rgba(75,139,245,.15);color:var(--dem)}
+  .pill.R{background:rgba(240,96,63,.15);color:var(--rep)}
+  .pill.I{background:rgba(160,160,160,.15);color:#b9c2cf}
+  .num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+  .num.big{font-size:15px;font-weight:700}
+  .ret{font-family:var(--mono);text-align:right;font-weight:700;font-size:13px}
+  .ret.pos{color:var(--buy)} .ret.neg{color:var(--sell)}
+  .colhead{display:grid;grid-template-columns:34px 1fr 92px 108px 90px;gap:10px;padding:9px 16px;border-bottom:1px solid var(--line);font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted2);font-weight:700}
+  .colhead div:nth-child(n+3){text-align:right}
+
+  .filters{display:flex;gap:8px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .search{flex:1;min-width:140px}
+  table{width:100%;border-collapse:collapse}
+  thead th{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted2);font-weight:700;text-align:left;padding:9px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
+  thead th.r{text-align:right}
+  tbody td{padding:10px 16px;border-bottom:1px solid #16202c;font-size:13px;vertical-align:middle}
+  tbody tr:hover{background:#0e1621}
+  tbody tr.fresh{background:rgba(55,182,196,.06)}
+  .tkr{font-family:var(--mono);font-weight:700;letter-spacing:.3px}
+  .co{font-size:11px;color:var(--muted)}
+  .tag{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px}
+  .tag.buy{background:var(--buy-bg);color:var(--buy)} .tag.sell{background:var(--sell-bg);color:var(--sell)}
+  .tag.exch{background:rgba(232,176,75,.12);color:var(--accent2)}
+  .late{font-size:10px;font-family:var(--mono);color:var(--sell);border:1px solid rgba(242,85,90,.3);border-radius:4px;padding:1px 5px;margin-left:6px}
+  .newtag{font-size:9.5px;font-weight:700;font-family:var(--mono);color:#05230f;background:var(--buy);border-radius:4px;padding:1px 5px;margin-left:6px}
+  .r{text-align:right} .muted{color:var(--muted)}
+
+  .side{display:flex;flex-direction:column;gap:16px}
+  .bar-row{display:flex;align-items:center;gap:10px;padding:8px 16px}
+  .bar-row .tkr{width:58px;flex:none}
+  .bar-track{flex:1;height:8px;background:#0d151f;border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;background:linear-gradient(90deg,#1f6f7d,var(--accent));border-radius:4px}
+  .bar-row .cnt{font-family:var(--mono);font-size:12px;color:var(--muted);width:34px;text-align:right}
+
+  .call{padding:13px 16px;border-bottom:1px solid var(--line)} .call:last-child{border-bottom:0}
+  .call .top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .call .who2{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  .call .tkr2{font-family:var(--mono);font-weight:700;font-size:15px}
+  .call .desc{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5}
+
+  .alert-body{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+  .note{font-size:11.5px;color:var(--muted);line-height:1.55}
+  .feed{display:flex;flex-direction:column;max-height:340px;overflow:auto}
+  .feed-item{display:flex;gap:10px;padding:10px 4px;border-bottom:1px solid #16202c}
+  .feed-item:last-child{border-bottom:0}
+  .feed-item .fdot{width:8px;height:8px;border-radius:50%;flex:none;margin-top:5px}
+  .feed-item .fbody{min-width:0;flex:1}
+  .feed-item .fmain{font-size:13px}
+  .feed-item .fmeta{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+  .feed-empty{padding:22px 4px;text-align:center;color:var(--muted2);font-size:12.5px}
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+  .toggle-row .lab{font-size:12px}
+
+  .banner{display:flex;gap:10px;align-items:flex-start;background:rgba(232,176,75,.07);border:1px solid rgba(232,176,75,.25);border-radius:10px;padding:12px 14px;margin:16px 0;font-size:12.5px;color:#d9c9a4;line-height:1.55}
+  .banner b{color:var(--accent2)}
+
+  footer{margin-top:28px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:11.5px;line-height:1.7}
+  footer h3{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#9fabbd;margin-bottom:6px}
+  .foot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:16px}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#16202e;border:1px solid var(--accent);color:#fff;padding:11px 18px;border-radius:8px;font-size:13px;z-index:100;box-shadow:0 8px 30px rgba(0,0,0,.5);opacity:0;transition:.25s;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+
+  @media(max-width:1080px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}.foot-grid{grid-template-columns:1fr}}
+  @media(max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}.lb-row,.colhead{grid-template-columns:28px 1fr 84px}.lb-row .num.vol,.colhead div:nth-child(4),.lb-row .ret,.colhead div:nth-child(5){display:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-in">
+    <div class="brand">
+      <div class="logo">▚</div>
+      <div><h1>Congress Trade Desk</h1><div class="sub">STOCK-ACT DISCLOSURE TRACKER</div></div>
+    </div>
+    <div class="status"><span class="dot" id="statusDot"></span><span id="statusTxt">DEMO DATA</span></div>
+    <input class="field" id="apiKey" type="password" placeholder="FMP key (free)" style="width:130px" />
+    <button class="btn" id="loadLive">Load live</button>
+    <button class="bell" id="bell" title="Alerts">🔔<span class="badge" id="bellBadge">0</span></button>
+    <button class="btn sm" id="refresh" title="Refresh">⟳</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="banner">
+    <span>ⓘ</span>
+    <span><b>Demo data below.</b> A web page can't read capitoltrades.com directly (browsers block cross-site data requests), and the only free no-key feed shut down in 2021. To pull <b>fresh</b> Senate + House filings without running a server, grab a free <b>Financial Modeling Prep</b> key (30 sec, no card) and hit <b>Load live</b>. Then <b>Alerts</b> pop in-page and on your desktop when a <b>top-10 member</b> files a new deal — while this tab stays open. Not investment advice.</span>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="grid">
+    <div style="display:flex;flex-direction:column;gap:16px">
+
+      <div class="panel">
+        <div class="p-head">
+          <h2 id="lbTitle">Top 10 Performers</h2><span class="hint" id="lbHint">by disclosed volume</span>
+          <div class="spacer"></div>
+          <div class="seg" id="lbSort">
+            <button data-k="volume" class="on">Volume</button>
+            <button data-k="trades">Trades</button>
+            <button data-k="ret">Est. Return</button>
+          </div>
+        </div>
+        <div class="colhead"><div>#</div><div>Politician</div><div>Trades</div><div>Volume</div><div>Est. Ret</div></div>
+        <div class="lb" id="leaderboard"></div>
+      </div>
+
+      <div class="panel" id="dealsPanel">
+        <div class="p-head"><h2>Recent Deals</h2><span class="hint" id="dealsHint"></span></div>
+        <div class="filters">
+          <div class="seg" id="topFilter">
+            <button data-t="1" class="on">Top 10 only</button>
+            <button data-t="0">All members</button>
+          </div>
+          <div class="seg" id="sideFilter">
+            <button data-f="all" class="on">All</button>
+            <button data-f="buy">Buys</button>
+            <button data-f="sell">Sells</button>
+          </div>
+          <input class="field search" id="dealSearch" placeholder="name, ticker, company…" />
+        </div>
+        <div style="max-height:620px;overflow:auto">
+          <table>
+            <thead><tr><th>Filed</th><th>Politician</th><th>Ticker</th><th>Type</th>
+              <th class="r">Amount</th><th class="r">Traded</th><th class="r">Lag</th></tr></thead>
+            <tbody id="dealsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="panel" id="alertPanel">
+        <div class="p-head"><h2>Live Alerts</h2><span class="hint" id="alertHint">watching top 10</span></div>
+        <div class="alert-body">
+          <button class="btn primary" id="enableDesktop" style="width:100%">Enable desktop pop-ups</button>
+          <div class="note" id="alertStatus">In-page alerts are always on. Enable desktop pop-ups to also get OS notifications. Load live data so there's a feed to watch — new deals from your top-10 list appear here while this tab is open.</div>
+          <div class="toggle-row">
+            <span class="lab">Alert scope</span>
+            <div class="seg" id="scopeToggle">
+              <button data-s="top" class="on">Top 10</button>
+              <button data-s="all">Everyone</button>
+            </div>
+          </div>
+          <div class="feed" id="feed"><div class="feed-empty">No alerts yet.</div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="p-head"><h2>Most-Traded Tickers</h2><span class="hint">by filing count</span></div>
+        <div id="tickers" style="padding:6px 0"></div>
+      </div>
+
+      <div class="panel">
+        <div class="p-head"><h2>Best Calls of 2025</h2><span class="hint">realized moves</span></div>
+        <div id="bestCalls"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="foot-grid">
+      <div><h3>Data & sources</h3>
+        Live mode reads official Senate eFD + House Clerk disclosures via the Financial Modeling Prep API (<span class="mono">/stable/senate-latest</span>, <span class="mono">/stable/house-latest</span>), free tier ≈ 250 calls/day. Capitol Trades has no public browser API; its data can only be reached server-side. Senate/House Stock Watcher (once free) stopped updating in 2021.
+      </div>
+      <div><h3>The STOCK Act</h3>
+        Members must disclose securities trades over $1,000 within 45 days. Amounts are filed as <em>ranges</em>, never exact — volume here uses range midpoints. "Lag" = days from trade to disclosure; a red flag marks filings past 45 days.
+      </div>
+      <div><h3>Alerts & limits</h3>
+        Alerts fire while this tab is open — the page polls the live feed every 30 min. Background alerts (tab closed) need a push server, which this serverless build deliberately avoids. Nothing here is investment advice.
+      </div>
+    </div>
+    <div class="mono" style="color:var(--muted2)">Congress Trade Desk · self-hosted · <span id="lastUpd"></span></div>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- demo dataset (real 2025 figures + illustrative rows) ---------- */
+const CO={NVDA:"NVIDIA",MSFT:"Microsoft",GOOGL:"Alphabet",AMZN:"Amazon",AAPL:"Apple",GS:"Goldman Sachs",
+AVGO:"Broadcom",WDC:"Western Digital",APP:"AppLovin",SPHR:"Sphere Ent.",IRBT:"iRobot",GPN:"Global Payments",
+MIR:"Mirion Tech.",MU:"Micron",TSM:"Taiwan Semi",META:"Meta",CRM:"Salesforce",V:"Visa",UNH:"UnitedHealth",PANW:"Palo Alto"};
+const AVA=["#2d5566","#4a3b6b","#5c3a3a","#2f5a44","#5c4a2a","#3a4a5c","#503a5c","#2a4a4a"];
+const mid=(a,b)=>(a+b)/2;
+const R={a:[1001,15000],b:[15001,50000],c:[50001,100000],d:[100001,250000],e:[250001,500000],f:[500001,1000000],g:[1000001,5000000]};
+
+const politicians=[
+ {name:"Richard Blumenthal",party:"D",chamber:"Senate",state:"CT",trades:412,vol:79600000,ret:11.4,top:["MSFT","AAPL","GS"]},
+ {name:"Michael McCaul",party:"R",chamber:"House",state:"TX",trades:288,vol:75200000,ret:9.7,top:["GPN","AVGO","NVDA"]},
+ {name:"Ro Khanna",party:"D",chamber:"House",state:"CA",trades:3980,vol:56100000,ret:6.2,top:["MIR","AAPL","MSFT"]},
+ {name:"Josh Gottheimer",party:"D",chamber:"House",state:"NJ",trades:934,vol:18400000,ret:22.8,top:["APP","NVDA","GOOGL"]},
+ {name:"Jefferson Shreve",party:"R",chamber:"House",state:"IN",trades:210,vol:14900000,ret:41.3,top:["WDC","APP","SPHR"]},
+ {name:"Nancy Pelosi",party:"D",chamber:"House",state:"CA",trades:44,vol:12300000,ret:33.6,top:["AVGO","NVDA","GOOGL"]},
+ {name:"Marjorie T. Greene",party:"R",chamber:"House",state:"GA",trades:176,vol:9800000,ret:18.1,top:["MU","TSM","PANW"]},
+ {name:"David McCormick",party:"R",chamber:"Senate",state:"PA",trades:120,vol:8200000,ret:7.8,top:["GS","V","UNH"]},
+ {name:"Dan Meuser",party:"R",chamber:"House",state:"PA",trades:305,vol:7400000,ret:12.9,top:["META","V","CRM"]},
+ {name:"Lisa McClain",party:"R",chamber:"House",state:"MI",trades:98,vol:6100000,ret:16.4,top:["MU","AVGO","TSM"]},
+ {name:"Ron Wyden",party:"D",chamber:"Senate",state:"OR",trades:61,vol:4900000,ret:14.2,top:["IRBT","MSFT","UNH"]},
+ {name:"Anthony Wied",party:"R",chamber:"House",state:"WI",trades:52,vol:3300000,ret:15.7,top:["MU","WDC","MSFT"]},
+];
+const SAMPLE=[
+ ["2025-12-18","Nancy Pelosi","D","House","AVGO","buy",R.g,"2025-11-20"],
+ ["2025-12-16","Josh Gottheimer","D","House","NVDA","buy",R.e,"2025-11-24"],
+ ["2025-12-15","Michael McCaul","R","House","GPN","buy",R.d,"2025-11-14"],
+ ["2025-12-12","Ro Khanna","D","House","AAPL","sell",R.c,"2025-11-30"],
+ ["2025-12-11","Marjorie T. Greene","R","House","MU","buy",R.b,"2025-11-19"],
+ ["2025-12-10","Richard Blumenthal","D","Senate","MSFT","buy",R.f,"2025-10-28","late"],
+ ["2025-12-09","Jefferson Shreve","R","House","APP","sell",R.e,"2025-12-01"],
+ ["2025-12-08","David McCormick","R","Senate","GS","sell",R.g,"2025-11-05"],
+ ["2025-12-05","Dan Meuser","R","House","META","buy",R.b,"2025-11-21"],
+ ["2025-12-04","Lisa McClain","R","House","AVGO","buy",R.c,"2025-11-18"],
+ ["2025-12-03","Ro Khanna","D","House","MIR","buy",R.b,"2025-11-27"],
+ ["2025-12-02","Ron Wyden","D","Senate","UNH","sell",R.d,"2025-11-08","late"],
+ ["2025-11-28","Nancy Pelosi","D","House","GOOGL","buy",R.f,"2025-11-04"],
+ ["2025-11-26","Anthony Wied","R","House","WDC","buy",R.c,"2025-11-12"],
+ ["2025-11-25","Josh Gottheimer","D","House","GOOGL","sell",R.b,"2025-11-13"],
+ ["2025-11-24","Michael McCaul","R","House","AVGO","buy",R.e,"2025-11-01"],
+ ["2025-11-21","Marjorie T. Greene","R","House","PANW","buy",R.b,"2025-11-07"],
+ ["2025-11-19","Richard Blumenthal","D","Senate","AAPL","buy",R.d,"2025-11-02"],
+ ["2025-11-18","Jefferson Shreve","R","House","SPHR","sell",R.d,"2025-11-10"],
+ ["2025-11-17","David McCormick","R","Senate","UNH","buy",R.d,"2025-10-30","late"],
+ ["2025-11-14","Ro Khanna","D","House","MSFT","sell",R.b,"2025-11-06"],
+ ["2025-11-12","Lisa McClain","R","House","TSM","buy",R.c,"2025-10-29"],
+ ["2025-11-10","Ron Wyden","D","Senate","MSFT","buy",R.c,"2025-10-27","late"],
+ ["2025-11-07","Nancy Pelosi","D","House","NVDA","buy",R.f,"2025-10-15"],
+ ["2025-11-05","Josh Gottheimer","D","House","APP","buy",R.e,"2025-10-24"],
+ ["2025-11-03","Michael McCaul","R","House","NVDA","buy",R.d,"2025-10-16"],
+];
+function expand(rows){return rows.map(r=>{const[filed,name,party,chamber,tkr,side,amt,traded,late]=r;
+ return{filed,name,party,chamber,ticker:tkr,company:CO[tkr]||tkr,side,amtLow:amt[0],amtHigh:amt[1],traded,late:!!late,
+  lag:Math.round((new Date(filed)-new Date(traded))/864e5)};});}
+
+const bestCalls=[
+ {tkr:"WDC",who:"J. Shreve (R-IN)",ret:"+350%",desc:"Bought Western Digital ~$36–38 in April; ran above $170 on AI storage demand."},
+ {tkr:"SPHR",who:"multiple filers",ret:"+265%",desc:"Sphere Entertainment near $26 in April; approached ~$95."},
+ {tkr:"APP",who:"Shreve / Gottheimer",ret:"+180%",desc:"AppLovin at $230–270 in Mar–Apr; climbed toward ~$670."},
+ {tkr:"AVGO",who:"N. Pelosi (D-CA)",ret:"+40%",desc:"Paul Pelosi's 20,000 Broadcom shares, $80 strike; closed the year ~$349."},
+ {tkr:"IRBT",who:"R. Wyden (D-OR)",ret:"–98% avoided",desc:"Sold iRobot near $7.80 in early Feb before a collapse toward zero."},
+];
+
+/* ---------- state ---------- */
+let TRADES=expand(SAMPLE), LIVE=false;
+let lbSortKey="volume", sideFilter="all", topOnly=true, searchQ="";
+let scope="top", desktopOn=false, pollTimer=null;
+let seen=new Set(), feed=[], unseen=0, freshIds=new Set();
+let WATCH=new Set();
+
+const $=s=>document.querySelector(s);
+const fmtMoney=n=>n>=1e9?"$"+(n/1e9).toFixed(1)+"B":n>=1e6?"$"+(n/1e6).toFixed(1)+"M":n>=1e3?"$"+(n/1e3).toFixed(0)+"K":"$"+n;
+const fmtRange=(lo,hi)=>fmtMoney(lo)+"–"+fmtMoney(hi);
+const initials=nm=>nm.split(/[\s.]+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase();
+const avaColor=nm=>AVA[[...nm].reduce((a,c)=>a+c.charCodeAt(0),0)%AVA.length];
+const idOf=t=>`${t.filed}|${t.name}|${t.ticker}|${t.side}|${t.amtLow}`;
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2800);}
+function beep(){try{const a=new(window.AudioContext||window.webkitAudioContext)();const o=a.createOscillator(),g=a.createGain();
+ o.connect(g);g.connect(a.destination);o.type="sine";o.frequency.value=660;g.gain.setValueAtTime(.08,a.currentTime);
+ g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.25);o.start();o.stop(a.currentTime+.25);}catch(e){}}
+
+/* ---------- watchlist (= the top-10 performers) ---------- */
+function computeLeaders(){
+  if(LIVE){
+    const m={};TRADES.forEach(t=>{const k=t.name;(m[k]||=({name:t.name,party:t.party,chamber:t.chamber,state:"",trades:0,vol:0,tk:{}}));
+      m[k].trades++;m[k].vol+=mid(t.amtLow,t.amtHigh);m[k].tk[t.ticker]=(m[k].tk[t.ticker]||0)+1;});
+    return Object.values(m).map(p=>({...p,ret:null,top:Object.entries(p.tk).sort((a,b)=>b[1]-a[1]).slice(0,3).map(x=>x[0])}));
+  }
+  return politicians.map(p=>({...p}));
+}
+function refreshWatch(){
+  const L=computeLeaders().sort((a,b)=>b.vol-a.vol).slice(0,10);
+  WATCH=new Set(L.map(p=>p.name));
+}
+
+/* ---------- renders ---------- */
+function renderStats(){
+  const vol=TRADES.reduce((s,t)=>s+mid(t.amtLow,t.amtHigh),0);
+  const people=new Set(TRADES.map(t=>t.name)).size;
+  const avgLag=Math.round(TRADES.reduce((s,t)=>s+(t.lag||0),0)/Math.max(TRADES.length,1));
+  const lateRate=Math.round(100*TRADES.filter(t=>t.late).length/Math.max(TRADES.length,1));
+  const cnt={};TRADES.forEach(t=>cnt[t.ticker]=(cnt[t.ticker]||0)+1);
+  const topTkr=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]||["—",0];
+  const cards=[["Disclosed Volume",fmtMoney(vol),LIVE?"live window":"2025 sample"],
+    ["Trades Tracked",TRADES.length.toLocaleString(),"filings"],["Members Active",people,"in feed"],
+    ["Avg Disclosure Lag",avgLag+"d","trade→filing"],["Late Filings",lateRate+"%","past 45-day rule"],
+    ["Most Traded",topTkr[0],topTkr[1]+" filings"]];
+  $("#stats").innerHTML=cards.map(c=>`<div class="stat"><div class="lbl">${c[0]}</div><div class="val">${c[1]} <small>· ${c[2]}</small></div></div>`).join("");
+}
+function renderLeaderboard(){
+  const key=lbSortKey==="ret"?"ret":lbSortKey==="trades"?"trades":"vol";
+  $("#lbTitle").textContent=LIVE?"Top 10 — Most Active":"Top 10 Performers";
+  const baseHint={vol:"by disclosed volume",trades:"by filing count",ret:"by est. return"}[key];
+  $("#lbHint").textContent=LIVE?baseHint+" · recent filings":baseHint;
+  if(key==="ret"&&LIVE){
+    $("#leaderboard").innerHTML=`<div style="padding:22px 16px" class="note">Est. Return needs a per-trade price feed and isn't computed in live volume mode. Volume &amp; Trades rank live. (Quiver Quantitative publishes a real per-member return leaderboard.)</div>`;return;}
+  let L=computeLeaders().sort((a,b)=>(b[key]??-1)-(a[key]??-1)).slice(0,10);
+  $("#leaderboard").innerHTML=L.map((p,i)=>{
+    const retTxt=p.ret==null?"—":(p.ret>=0?"+":"")+p.ret.toFixed(1)+"%";
+    const retCls=p.ret==null?"":p.ret>=0?"pos":"neg";
+    return `<div class="lb-row" title="${p.top.join(', ')}">
+      <div class="rank ${i===0?'top':''}">${i+1}</div>
+      <div class="who"><div class="ava" style="background:${avaColor(p.name)}">${initials(p.name)}</div>
+        <div><div class="nm">${p.name} <span class="pill ${p.party}">${p.party}</span></div>
+        <div class="meta">${p.chamber}${p.state?" · "+p.state:""} · top: ${p.top.slice(0,3).join(" ")}</div></div></div>
+      <div class="num big">${p.trades.toLocaleString()}</div>
+      <div class="num vol">${fmtMoney(p.vol)}</div>
+      <div class="ret ${retCls}">${retTxt}</div></div>`;}).join("");
+}
+function renderDeals(){
+  let rows=TRADES.slice().sort((a,b)=>new Date(b.filed)-new Date(a.filed));
+  if(topOnly) rows=rows.filter(t=>WATCH.has(t.name));
+  if(sideFilter!=="all") rows=rows.filter(t=>t.side===sideFilter);
+  if(searchQ){const q=searchQ.toLowerCase();rows=rows.filter(t=>(t.name+t.ticker+t.company).toLowerCase().includes(q));}
+  $("#dealsHint").textContent=rows.length+" filings"+(topOnly?" · top 10":"");
+  const tagFor=s=>s==="buy"?'<span class="tag buy">▲ BUY</span>':s==="sell"?'<span class="tag sell">▼ SELL</span>':'<span class="tag exch">⇄ EXCH</span>';
+  $("#dealsBody").innerHTML=rows.slice(0,300).map(t=>`
+    <tr class="${freshIds.has(idOf(t))?'fresh':''}">
+      <td class="mono muted">${t.filed}${freshIds.has(idOf(t))?'<span class="newtag">NEW</span>':''}</td>
+      <td>${t.name} <span class="pill ${t.party}">${t.party}</span><div class="co">${t.chamber}</div></td>
+      <td><span class="tkr">${t.ticker}</span><div class="co">${t.company}</div></td>
+      <td>${tagFor(t.side)}</td>
+      <td class="r mono">${fmtRange(t.amtLow,t.amtHigh)}</td>
+      <td class="r mono muted">${t.traded||"—"}</td>
+      <td class="r mono ${t.late?'':'muted'}">${t.lag??"—"}d${t.late?'<span class="late">LATE</span>':''}</td></tr>`).join("")
+    ||`<tr><td colspan="7" style="padding:24px;text-align:center" class="muted">No filings match.</td></tr>`;
+}
+function renderTickers(){
+  const cnt={};TRADES.forEach(t=>cnt[t.ticker]=(cnt[t.ticker]||0)+1);
+  const arr=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,8);const max=arr[0]?arr[0][1]:1;
+  $("#tickers").innerHTML=arr.map(([tk,c])=>`<div class="bar-row"><span class="tkr">${tk}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:${100*c/max}%"></div></div><span class="cnt">${c}</span></div>`).join("");
+}
+function renderBestCalls(){
+  $("#bestCalls").innerHTML=bestCalls.map(c=>`<div class="call"><div class="top"><span class="tkr2">${c.tkr}</span>
+    <span class="mono" style="font-weight:700;font-size:15px;color:${c.ret.includes('avoid')?'var(--accent2)':c.ret.startsWith('–')?'var(--sell)':'var(--buy)'}">${c.ret}</span></div>
+    <div class="who2">${c.who}</div><div class="desc">${c.desc}</div></div>`).join("");
+}
+function renderFeed(){
+  $("#alertHint").textContent=scope==="top"?"watching top 10":"watching everyone";
+  if(!feed.length){$("#feed").innerHTML=`<div class="feed-empty">${LIVE?"No new deals since load — polling every 30 min.":"Load live data to start watching for new deals."}</div>`;return;}
+  $("#feed").innerHTML=feed.slice(0,40).map(t=>{
+    const col=t.side==="buy"?"var(--buy)":t.side==="sell"?"var(--sell)":"var(--accent2)";
+    return `<div class="feed-item"><div class="fdot" style="background:${col}"></div>
+      <div class="fbody"><div class="fmain"><b>${t.name}</b> ${t.side==='buy'?'bought':t.side==='sell'?'sold':'exchanged'} <b class="mono">${t.ticker}</b></div>
+      <div class="fmeta">${fmtRange(t.amtLow,t.amtHigh)} · filed ${t.filed}${t.late?' · ⚠ late':''}</div></div></div>`;}).join("");
+}
+function setBadge(n){unseen=n;const b=$("#bellBadge");b.textContent=n;b.classList.toggle("show",n>0);}
+
+/* ---------- live fetch ----------
+   Set PROXY_URL to your Cloudflare Worker (e.g. "https://fmp-proxy.you.workers.dev")
+   to keep the key server-side. Leave it "" to call FMP directly with the key field. */
+const PROXY_URL="";
+async function pullFeed(key,limit){
+  const useProxy=!!PROXY_URL;
+  const base=useProxy? PROXY_URL.replace(/\/+$/,"")+"/" : "https://financialmodelingprep.com/stable/";
+  const auth=useProxy? "" : `&apikey=${key}`;
+  const [sen,hou]=await Promise.all([
+    fetch(`${base}senate-latest?page=0&limit=${limit}${auth}`).then(r=>r.json()),
+    fetch(`${base}house-latest?page=0&limit=${limit}${auth}`).then(r=>r.json())]);
+  if((sen&&(sen["Error Message"]||sen.error))||!Array.isArray(sen))
+    throw new Error(sen&&sen.error==="daily_cap_reached"?"Daily data cap reached — resets 00:00 UTC.":((sen&&(sen["Error Message"]||sen.error))||"Feed error / plan limit"));
+  const norm=(arr,chamber)=>(Array.isArray(arr)?arr:[]).map(x=>{
+    const name=x.representative||x.senator||[x.firstName,x.lastName].filter(Boolean).join(" ")||x.office||"Unknown";
+    const rt=(x.type||x.transactionType||"").toLowerCase();
+    const side=/purchase|buy/.test(rt)?"buy":/sale|sell/.test(rt)?"sell":"exch";
+    const nums=(String(x.amount||x.range||"").match(/[\d,]+/g)||[]).map(n=>+n.replace(/,/g,""));
+    const lo=nums[0]||1001, hi=nums[1]||lo;
+    const filed=(x.disclosureDate||x.dateReceived||"").slice(0,10);
+    const traded=(x.transactionDate||x.date||"").slice(0,10);
+    const lag=filed&&traded?Math.round((new Date(filed)-new Date(traded))/864e5):null;
+    const tkr=(x.symbol||x.ticker||"").toUpperCase()||"—";
+    return{filed,traded,name,party:(x.party||"I").slice(0,1).toUpperCase(),chamber,ticker:tkr,
+      company:x.assetDescription||tkr,side,amtLow:lo,amtHigh:hi,lag,late:lag!=null&&lag>45};}).filter(t=>t.filed);
+  return [...norm(sen,"Senate"),...norm(hou,"House")];
+}
+async function loadLive(){
+  const key=$("#apiKey").value.trim();
+  if(!PROXY_URL && !key){toast("Enter a free FMP key first (financialmodelingprep.com).");return;}
+  const btn=$("#loadLive");btn.textContent="Loading…";btn.disabled=true;
+  try{
+    const merged=await pullFeed(key,250);
+    if(!merged.length) throw new Error("No rows returned (check plan/endpoint).");
+    const firstLive=!LIVE;
+    TRADES=merged;LIVE=true;refreshWatch();
+    $("#statusTxt").textContent="LIVE · FMP";$("#statusDot").classList.add("live");
+    if(firstLive){ seen=new Set(TRADES.map(idOf)); startPolling(); toast(`Loaded ${merged.length} live filings.`); }
+    renderAll();
+  }catch(e){toast("Live load failed: "+e.message);console.error(e);}
+  finally{btn.textContent="Load live";btn.disabled=false;}
+}
+function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(pollNew,30*60*1000);}
+async function pollNew(){
+  if(!LIVE) return;
+  try{
+    const key=$("#apiKey").value.trim();
+    const rows=await pullFeed(key,100);
+    const news=[];
+    rows.forEach(t=>{const id=idOf(t);if(!seen.has(id)){seen.add(id);
+      if(scope==="all"||WATCH.has(t.name)){news.push(t);TRADES.unshift(t);freshIds.add(id);}}});
+    if(news.length){
+      feed=[...news,...feed];setBadge(unseen+news.length);
+      $("#alertPanel").classList.remove("flash");void $("#alertPanel").offsetWidth;$("#alertPanel").classList.add("flash");
+      renderAll();
+      if(desktopOn){beep();news.slice(0,3).forEach(t=>new Notification(
+        `${t.name} ${t.side==='buy'?'bought':'sold'} ${t.ticker}`,{body:`${fmtRange(t.amtLow,t.amtHigh)} · filed ${t.filed}`}));}
+      toast(`${news.length} new ${scope==='top'?'top-10 ':''}deal${news.length>1?'s':''}.`);
+    }
+  }catch(e){console.error("poll",e);}
+}
+
+/* ---------- desktop opt-in ---------- */
+async function enableDesktop(){
+  if(!("Notification"in window)){toast("This browser has no Notification API.");return;}
+  const p=await Notification.requestPermission();
+  if(p!=="granted"){toast("Desktop notifications blocked in browser settings.");return;}
+  desktopOn=true;$("#enableDesktop").classList.add("on");$("#enableDesktop").textContent="Desktop pop-ups on";
+  $("#alertStatus").textContent=LIVE?"Desktop pop-ups on. New top-10 deals ping here + your OS every 30 min while this tab is open.":"Desktop pop-ups on. Now load live data so there's a feed to watch.";
+  toast("Desktop pop-ups enabled.");
+}
+
+/* ---------- wire ---------- */
+function renderAll(){refreshWatch();renderStats();renderLeaderboard();renderDeals();renderTickers();renderBestCalls();renderFeed();
+  $("#lastUpd").textContent="rendered "+new Date().toLocaleString();}
+$("#lbSort").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  [...$("#lbSort").children].forEach(x=>x.classList.remove("on"));b.classList.add("on");lbSortKey=b.dataset.k;renderLeaderboard();});
+$("#topFilter").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  [...$("#topFilter").children].forEach(x=>x.classList.remove("on"));b.classList.add("on");topOnly=b.dataset.t==="1";renderDeals();});
+$("#sideFilter").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  [...$("#sideFilter").children].forEach(x=>x.classList.remove("on"));b.classList.add("on");sideFilter=b.dataset.f;renderDeals();});
+$("#scopeToggle").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  [...$("#scopeToggle").children].forEach(x=>x.classList.remove("on"));b.classList.add("on");scope=b.dataset.s;renderFeed();});
+$("#dealSearch").addEventListener("input",e=>{searchQ=e.target.value;renderDeals();});
+$("#loadLive").addEventListener("click",loadLive);
+$("#apiKey").addEventListener("keydown",e=>{if(e.key==="Enter")loadLive();});
+$("#refresh").addEventListener("click",()=>{renderAll();toast("View refreshed.");});
+$("#enableDesktop").addEventListener("click",enableDesktop);
+$("#bell").addEventListener("click",()=>{setBadge(0);$("#alertPanel").scrollIntoView({behavior:"smooth",block:"center"});
+  $("#alertPanel").classList.remove("flash");void $("#alertPanel").offsetWidth;$("#alertPanel").classList.add("flash");});
+
+renderAll();
+</script>
+</body>
+</html>
